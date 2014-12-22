@@ -1,6 +1,20 @@
 CMAKE_MINIMUM_REQUIRED ( VERSION 2.8 )
 PROJECT ( BifrostTools )
 
+FIND_PACKAGE ( Maya REQUIRED  )
+
+IF (APPLE)
+  LINK_DIRECTORIES ( ${MAYA_LOCATION}/../Maya.app/Contents/MacOS )
+  INCLUDE_DIRECTORIES (
+    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/bifrostcore/api
+    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/aminomath/api
+    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/bifrostapi/api
+    ${MAYA_LOCATION}/../plug-ins/bifrost/include/common
+    )
+ENDIF ()
+
+
+
 # Houdini requirement are stringent and often at odds
 # with other DCC application, as such, we can't build
 # them together.
