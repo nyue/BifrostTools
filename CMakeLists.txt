@@ -6,10 +6,10 @@ FIND_PACKAGE ( Maya REQUIRED  )
 IF (APPLE)
   LINK_DIRECTORIES ( ${MAYA_LOCATION}/../Maya.app/Contents/MacOS )
   INCLUDE_DIRECTORIES (
-    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/bifrostcore/api
-    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/aminomath/api
-    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/bifrostapi/api
     ${MAYA_LOCATION}/../plug-ins/bifrost/include/common
+    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/bifrostcore/api
+    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/bifrostapi/api
+    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/aminomath/api
     )
 ENDIF ()
 
