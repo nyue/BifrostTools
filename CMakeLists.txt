@@ -4,7 +4,11 @@ PROJECT ( BifrostTools )
 FIND_PACKAGE ( Maya REQUIRED  )
 
 IF (APPLE)
-  LINK_DIRECTORIES ( ${MAYA_LOCATION}/../Maya.app/Contents/MacOS )
+  ADD_DEFINITIONS ( -std=c++0x )
+  LINK_DIRECTORIES (
+    ${MAYA_LOCATION}/../plug-ins/bifrost/bin
+    ${MAYA_LOCATION}/../Maya.app/Contents/MacOS 
+    )
   INCLUDE_DIRECTORIES (
     ${MAYA_LOCATION}/../plug-ins/bifrost/include/common
     ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/bifrostcore/api
