@@ -8,7 +8,12 @@ IF (WIN32)
 ENDIF (WIN32)
 
 ADD_LIBRARY ( bifrost SHARED ProcMain.cpp ProcArgs.cpp )
-TARGET_LINK_LIBRARIES ( bifrost ${Arnold_ai_LIBRARY} )
+TARGET_LINK_LIBRARIES ( bifrost
+  ${Arnold_ai_LIBRARY}
+  bifrostcore
+  bifrostapi
+  Base
+  )
 
 ARNOLD_SET_LIBRARY_PROPERTIES ( bifrost )
 
