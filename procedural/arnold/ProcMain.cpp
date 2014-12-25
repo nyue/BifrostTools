@@ -1,51 +1,43 @@
-#ifdef BOILER_PLATE_CODE
-
-int ProcInit( struct AtNode *node, void **user_ptr );
-int ProcCleanup( void *user_ptr );
-int ProcNumNodes( void *user_ptr );
-struct AtNode* ProcGetNode(void *user_ptr, int i);
-
-extern "C"
-{
-    int ProcLoader(AtProcVtable* api)
-    {
-        api->Init        = ProcInit;
-        api->Cleanup     = ProcCleanup;
-        api->NumNodes    = ProcNumNodes;
-        api->GetNode     = ProcGetNode;
-        strcpy(api->version, AI_VERSION);
-        return 1;
-    }
-}
-
-#endif // BOILER_PLATE_CODE
-
+#include "ProcArgs.h"
 #include <ai.h>
 #include <string.h>
-#include "ProcArgs.h"
+#include <boost/format.hpp>
+#include <math.h>
 
-using namespace VII;
+const size_t MAX_BIF_FILENAME_LENGTH = 4096;
 
 int ProcInit( struct AtNode *node, void **user_ptr )
 {
     ProcArgs * args = new ProcArgs();
     args->proceduralNode = node;
 
-	{
-		// Do stuff here
-		args->createdNodes.push_back(AiNode("sphere"));
-	}
+    std::string dataString = AiNodeGetStr(node,"data");
+    const float current_frame = AiNodeGetFlt(AiUniverseGetOptions(), "frame");
+
+    if (dataString.size() != 0)
+    {
+        std::string bif_filename_format = dataString;
+        char bif_filename[MAX_BIF_FILENAME_LENGTH];
+        uint32_t bif_int_frame_number = static_cast<uint32_t>(floor(current_frame));
+        int sprintf_status = sprintf(bif_filename,bif_filename_format.c_str(),bif_int_frame_number);
+
+        std::cerr << boost::format("BIFROST ARNOLD PROCEDURAL : bif filename = %1%, frame = %2%")
+            % bif_filename % current_frame << std::endl;
+
+        // Do stuff here
+        args->createdNodes.push_back(AiNode("sphere"));
+    }
 
     *user_ptr = args;
 
-	return true;
+    return true;
 }
 
 int ProcCleanup( void *user_ptr )
 {
-	delete reinterpret_cast<ProcArgs*>( user_ptr );
+    delete reinterpret_cast<ProcArgs*>( user_ptr );
 
-	return true;
+    return true;
 }
 
 int ProcNumNodes( void *user_ptr )
