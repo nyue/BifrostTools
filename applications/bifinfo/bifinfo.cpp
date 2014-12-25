@@ -6,6 +6,8 @@
 #include <bifrostapi/bifrost_string.h>
 #include <bifrostapi/bifrost_stringarray.h>
 #include <bifrostapi/bifrost_refarray.h>
+#include <bifrostapi/bifrost_channel.h>
+#include <boost/format.hpp>
 
 int main(int argc, char **argv)
 {
@@ -37,13 +39,15 @@ int main(int argc, char **argv)
     				<< std::endl;
 
             Bifrost::API::RefArray channels = component.channels();
+            size_t particleCount = component.elementCount();
             size_t channelCount = channels.count();
             for (size_t channelIndex=0;channelIndex<channelCount;channelIndex++)
             {
-            	Bifrost::API::String channelName = Bifrost::API::Base(channels[channelIndex]).name();
-                std::cout << "\tChannel : "
-                		<< channelName.c_str()
-        				<< std::endl;
+            	const Bifrost::API::Channel& ch = channels[channelIndex];
+            	Bifrost::API::String channelName = ch.name();
+            	Bifrost::API::DataType channelDataType = ch.dataType();
+            	std::cout << boost::format("\tChannel[%1%] of type %2% : %3% has %4% particles")
+            		% channelIndex % channelDataType % channelName.c_str() % channelCount << std::endl;
             }
         }
         else if (componentType == Bifrost::API::VoxelComponentType)

@@ -1,1 +1,2 @@
 ADD_SUBDIRECTORY ( bifinfo )
+ADD_SUBDIRECTORY ( bifdump )
