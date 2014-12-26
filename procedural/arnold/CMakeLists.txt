@@ -10,6 +10,7 @@ ENDIF (WIN32)
 ADD_LIBRARY ( bifrost SHARED ProcMain.cpp ProcArgs.cpp )
 TARGET_LINK_LIBRARIES ( bifrost
   ${Arnold_ai_LIBRARY}
+  ${Boost_LIBRARIES}
   bifrostcore
   bifrostapi
   Base

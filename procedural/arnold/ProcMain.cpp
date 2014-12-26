@@ -3,6 +3,9 @@
 #include <string.h>
 #include <boost/format.hpp>
 #include <math.h>
+#include <String2ArgcArgv.h>
+#include <OpenEXR/ImathBox.h>
+
 // Bifrost headers - START
 #include <bifrostapi/bifrost_om.h>
 #include <bifrostapi/bifrost_stateserver.h>
@@ -45,7 +48,8 @@ int findChannelIndexViaName(const Bifrost::API::Component& component,
 }
 
 bool ProcessBifrostParticleCache(const std::string& bif_filename,
-                                 ProcArgs * args)
+        const float pointRadius,
+        ProcArgs::AtNodePtrContainer & createdNodes)
 {
     Bifrost::API::String biffile = bif_filename.c_str();
     Bifrost::API::ObjectModel om;
@@ -82,11 +86,11 @@ bool ProcessBifrostParticleCache(const std::string& bif_filename,
                             // std::cout << "tile:" << t << " depth:" << d << std::endl;
                             if ( ch.dataType() == Bifrost::API::FloatV3Type )
                             {
-                                args->createdNodes.push_back(AiNode("points"));
-                                AtNode *points = args->createdNodes.back();
+                                createdNodes.push_back(AiNode("points"));
+                                AtNode *points = createdNodes.back();
                                 const Bifrost::API::TileData<amino::Math::vec3f>& f3 = ch.tileData<amino::Math::vec3f>( tindex );
                                 std::vector<amino::Math::vec3f> P(f3.count());
-                                std::vector<float> radius(f3.count(),0.1f);
+                                std::vector<float> radius(f3.count(),pointRadius);
                                 for (size_t i=0; i<f3.count(); i++ ) {
                                     const amino::Math::vec3f& val = f3[i];
                                     // std::cerr << "\t" << val[0] << " " << val[1] << " " << val[2] << std::endl;
@@ -116,23 +120,113 @@ int ProcInit( struct AtNode *node, void **user_ptr )
     args->proceduralNode = node;
 
     std::string dataString = AiNodeGetStr(node,"data");
-    const float current_frame = AiNodeGetFlt(AiUniverseGetOptions(), "frame");
-    const float fps = AiNodeGetFlt(AiUniverseGetOptions(), "fps");
-
     if (dataString.size() != 0)
     {
-        std::string bif_filename_format = dataString;
+        const float current_frame = AiNodeGetFlt(AiUniverseGetOptions(), "frame");
+        const float fps = AiNodeGetFlt(AiUniverseGetOptions(), "fps");
+
+        PI::String2ArgcArgv s2aa(dataString);
+        args->processDataStringAsArgcArgv(s2aa.argc(),s2aa.argv());
+
+        std::string bif_filename_format = args->bifrostFilename;
+
         char bif_filename[MAX_BIF_FILENAME_LENGTH];
         uint32_t bif_int_frame_number = static_cast<uint32_t>(floor(current_frame));
         int sprintf_status = sprintf(bif_filename,bif_filename_format.c_str(),bif_int_frame_number);
 
-        std::cerr << boost::format("BIFROST ARNOLD PROCEDURAL : bif filename = %1%, frame = %2%, fps = %3%")
-            % bif_filename % current_frame % fps << std::endl;
+        if (args->performEmission)
+        {
+            // Emit Arnold geometry
+            std::cerr << boost::format("BIFROST ARNOLD PROCEDURAL : bif filename = %1%, frame = %2%, fps = %3%")
+                % bif_filename % current_frame % fps << std::endl;
 
-        // Do stuff here
-        ProcessBifrostParticleCache(bif_filename,args);
+            ProcessBifrostParticleCache(bif_filename,args->pointRadius,args->createdNodes);
+        }
+        else
+        {
+            /*!
+             * \remark Iterate through each tile in the bifrost file,
+             *         determine the bounds for that tile (including
+             *         velocity blur growth) and generate a procedural
+             *         for that tile of particle data
+             */
+#ifdef WAIT
+            {
+                args->createdNodes.push_back(AiNode("procedural"));
+                AtNode *procedural = args->createdNodes.back();
+                char proceduralName[256];
+                sprintf(proceduralName,"Nested%04lu",proceduralIndex);
+                AiNodeSetStr(procedural,"name",proceduralName);
+                AiNodeSetStr(procedural,"dso",parentProceduralDSO);
+                AiNodeSetStr(procedural,"data","Nested01 Data");
+                AiNodeSetBool(procedural,"load_at_init",true);
+            }
+#endif
 
-        // args->createdNodes.push_back(AiNode("sphere"));
+            Bifrost::API::String biffile = bif_filename;
+            Bifrost::API::ObjectModel om;
+            Bifrost::API::FileIO fileio = om.createFileIO( biffile );
+            Bifrost::API::StateServer ss = fileio.load( );
+            if ( !ss.valid() ) {
+                return false;
+            }
+
+            size_t numComponents = ss.components().count();
+            for (size_t componentIndex=0;componentIndex<numComponents;componentIndex++)
+            {
+                Bifrost::API::Component component = ss.components()[componentIndex];
+                Bifrost::API::TypeID componentType = component.type();
+                if (componentType == Bifrost::API::PointComponentType)
+                {
+                    int channelIndex = findChannelIndexViaName(component,"position");
+                    if (channelIndex>=0)
+                    {
+                        const Bifrost::API::Channel& ch = component.channels()[channelIndex];
+                        if (ch.valid())
+                        {
+                            // iterate over the tile tree at each level
+                            Bifrost::API::Layout layout = component.layout();
+                            size_t depthCount = layout.depthCount();
+                            for ( size_t d=0; d<depthCount; d++ ) {
+                                for ( size_t t=0; t<layout.tileCount(d); t++ ) {
+                                    Bifrost::API::TreeIndex tindex(t,d);
+                                    if ( !ch.elementCount( tindex ) ) {
+                                        // nothing there
+                                        continue;
+                                    }
+
+                                    if ( ch.dataType() == Bifrost::API::FloatV3Type )
+                                    {
+                                        Imath::Box3f particleBound;
+#ifdef USESTUFF
+                                        createdNodes.push_back(AiNode("points"));
+                                        AtNode *points = createdNodes.back();
+                                        const Bifrost::API::TileData<amino::Math::vec3f>& f3 = ch.tileData<amino::Math::vec3f>( tindex );
+                                        std::vector<amino::Math::vec3f> P(f3.count());
+                                        std::vector<float> radius(f3.count(),pointRadius);
+                                        for (size_t i=0; i<f3.count(); i++ ) {
+                                            const amino::Math::vec3f& val = f3[i];
+                                            // std::cerr << "\t" << val[0] << " " << val[1] << " " << val[2] << std::endl;
+                                            P[i] = f3[i];
+                                        }
+                                        AiNodeSetArray(points, "points",
+                                                                   AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
+                                        AiNodeSetArray(points, "radius",
+                                                                   AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
+#endif
+
+                                    }
+
+                                }
+                            }
+
+                        }
+                    }
+
+                }
+            }
+
+        }
     }
 
     *user_ptr = args;
