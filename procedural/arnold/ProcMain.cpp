@@ -16,9 +16,14 @@
 #include <bifrostapi/bifrost_layout.h>
 // Bifrost headers - END
 
+/*!
+ * DESIGN : The procedural recurse one level. Root level does splitting,
+ *          subsequent level does geometry emission
+ */
 const size_t MAX_BIF_FILENAME_LENGTH = 4096;
 
-int findChannelIndexViaName(const Bifrost::API::Component& component,const Bifrost::API::String& searchChannelName)
+int findChannelIndexViaName(const Bifrost::API::Component& component,
+                            const Bifrost::API::String& searchChannelName)
 {
     Bifrost::API::RefArray channels = component.channels();
     size_t particleCount = component.elementCount();
@@ -29,10 +34,10 @@ int findChannelIndexViaName(const Bifrost::API::Component& component,const Bifro
         Bifrost::API::String channelName = ch.name();
         if (channelName.find(searchChannelName) != Bifrost::API::String::npos)
         {
-//            std::cout << boost::format("ARNOLD BIFROST FOUND CHANNEL %1% MATCHING %2%")
-//            % channelName.c_str()
-//            % searchChannelName.c_str()
-//            << std::endl;
+            //            std::cout << boost::format("ARNOLD BIFROST FOUND CHANNEL %1% MATCHING %2%")
+            //            % channelName.c_str()
+            //            % searchChannelName.c_str()
+            //            << std::endl;
             return channelIndex;
         }
     }
@@ -112,6 +117,7 @@ int ProcInit( struct AtNode *node, void **user_ptr )
 
     std::string dataString = AiNodeGetStr(node,"data");
     const float current_frame = AiNodeGetFlt(AiUniverseGetOptions(), "frame");
+    const float fps = AiNodeGetFlt(AiUniverseGetOptions(), "fps");
 
     if (dataString.size() != 0)
     {
@@ -120,8 +126,8 @@ int ProcInit( struct AtNode *node, void **user_ptr )
         uint32_t bif_int_frame_number = static_cast<uint32_t>(floor(current_frame));
         int sprintf_status = sprintf(bif_filename,bif_filename_format.c_str(),bif_int_frame_number);
 
-        std::cerr << boost::format("BIFROST ARNOLD PROCEDURAL : bif filename = %1%, frame = %2%")
-            % bif_filename % current_frame << std::endl;
+        std::cerr << boost::format("BIFROST ARNOLD PROCEDURAL : bif filename = %1%, frame = %2%, fps = %3%")
+            % bif_filename % current_frame % fps << std::endl;
 
         // Do stuff here
         ProcessBifrostParticleCache(bif_filename,args);
