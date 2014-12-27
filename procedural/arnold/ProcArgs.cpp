@@ -17,8 +17,6 @@ int ProcArgs::processDataStringAsArgcArgv(int argc, const char **argv)
 {
     try {
         float radius = 0.01f; // default - renders point of size 0.01
-        bool velocity_blur = false; // default - no velocity motion blur
-        bool emit_geometry = false; // default - do not emit geometry
         std::string bifrost_filename;
         size_t tileIndex = 0;
         size_t tileDepth = 0;
@@ -28,8 +26,7 @@ int ProcArgs::processDataStringAsArgcArgv(int argc, const char **argv)
             ("help", "produce help message")
             ("radius", po::value<float>(&radius),
              "radius for RIB point geometry.")
-            ("velocity_blur", po::value<bool>(&velocity_blur),
-             "use velocity for motion blur.")
+            ("velocity-blur", "use velocity for motion blur.")
              ("bif", po::value<std::string>(&bifrost_filename),
               "bifrost filename.")
               ("tile-index", po::value<size_t>(&tileIndex),
@@ -47,25 +44,17 @@ int ProcArgs::processDataStringAsArgcArgv(int argc, const char **argv)
             std::cout << desc << "\n";
             return 1;
         }
+        if (vm.count("velocity-blur")) {
+            enableVelocityMotionBlur = true;
+        }
+        if (vm.count("emit")) {
+            performEmission = true;
+        }
         pointRadius = radius;
-        enableVelocityMotionBlur = velocity_blur;
-        performEmission = emit_geometry;
         bifrostFilename = bifrost_filename;
+        std::cout << "XXXXXXXXXXXXXX bifrost_filename : " << bifrost_filename << std::endl;
         bifrostTileIndex = tileIndex;
         bifrostTileDepth = tileDepth;
-
-        /*
-        if (vm.count("radius")) {
-            std::cout << "Radius value is " <<
-                vm["radius"].as<float>() << "\n";
-            std::cout << "radius variable " << radius << std::endl;
-        }
-        if (vm.count("velocity_blur")) {
-            std::cout << "Velocity blur value is " <<
-                vm["velocity_blur"].as<int>() << "\n";
-            std::cout << "velocity_blur variable " << velocity_blur << std::endl;
-        }
-        */
     }
     catch(std::exception& e) {
         std::cerr << "error: " << e.what() << "\n";

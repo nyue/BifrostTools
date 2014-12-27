@@ -116,26 +116,34 @@ bool ProcessBifrostParticleCache(const std::string& bif_filename,
 
 int ProcInit( struct AtNode *node, void **user_ptr )
 {
+    printf("ProcInit : 0001\n");
     ProcArgs * args = new ProcArgs();
     args->proceduralNode = node;
 
+    const char *parentProceduralDSO = AiNodeGetStr(node,"dso");
     std::string dataString = AiNodeGetStr(node,"data");
+    printf("ProcInit : 0002 dataString = \"%s\"\n",dataString.c_str());
     if (dataString.size() != 0)
     {
+        printf("ProcInit : 0010\n");
         const float current_frame = AiNodeGetFlt(AiUniverseGetOptions(), "frame");
         const float fps = AiNodeGetFlt(AiUniverseGetOptions(), "fps");
 
-        PI::String2ArgcArgv s2aa(dataString);
+        std::string parsingDataString = (boost::format("%1% %2%") % parentProceduralDSO % dataString.c_str()).str();
+        PI::String2ArgcArgv s2aa(parsingDataString);
         args->processDataStringAsArgcArgv(s2aa.argc(),s2aa.argv());
+        printf("ProcInit : 0015\n");
 
         std::string bif_filename_format = args->bifrostFilename;
 
         char bif_filename[MAX_BIF_FILENAME_LENGTH];
         uint32_t bif_int_frame_number = static_cast<uint32_t>(floor(current_frame));
         int sprintf_status = sprintf(bif_filename,bif_filename_format.c_str(),bif_int_frame_number);
+        printf("ProcInit : 0016 bif_filename_format = \"%s\"\n",bif_filename_format.c_str());
 
         if (args->performEmission)
         {
+            printf("ProcInit : 0020\n");
             // Emit Arnold geometry
             std::cerr << boost::format("BIFROST ARNOLD PROCEDURAL : bif filename = %1%, frame = %2%, fps = %3%")
                 % bif_filename % current_frame % fps << std::endl;
@@ -144,25 +152,14 @@ int ProcInit( struct AtNode *node, void **user_ptr )
         }
         else
         {
+            printf("ProcInit : 0030\n");
             /*!
              * \remark Iterate through each tile in the bifrost file,
              *         determine the bounds for that tile (including
              *         velocity blur growth) and generate a procedural
              *         for that tile of particle data
              */
-#ifdef WAIT
-            {
-                args->createdNodes.push_back(AiNode("procedural"));
-                AtNode *procedural = args->createdNodes.back();
-                char proceduralName[256];
-                sprintf(proceduralName,"Nested%04lu",proceduralIndex);
-                AiNodeSetStr(procedural,"name",proceduralName);
-                AiNodeSetStr(procedural,"dso",parentProceduralDSO);
-                AiNodeSetStr(procedural,"data","Nested01 Data");
-                AiNodeSetBool(procedural,"load_at_init",true);
-            }
-#endif
-
+            printf("ProcInit : 0031 bif_filename = \"%s\"\n",bif_filename);
             Bifrost::API::String biffile = bif_filename;
             Bifrost::API::ObjectModel om;
             Bifrost::API::FileIO fileio = om.createFileIO( biffile );
@@ -170,20 +167,24 @@ int ProcInit( struct AtNode *node, void **user_ptr )
             if ( !ss.valid() ) {
                 return false;
             }
-
+            size_t proceduralIndex = 0;
             size_t numComponents = ss.components().count();
             for (size_t componentIndex=0;componentIndex<numComponents;componentIndex++)
             {
+                printf("ProcInit : 0040\n");
                 Bifrost::API::Component component = ss.components()[componentIndex];
                 Bifrost::API::TypeID componentType = component.type();
                 if (componentType == Bifrost::API::PointComponentType)
                 {
+                    printf("ProcInit : 0050\n");
                     int channelIndex = findChannelIndexViaName(component,"position");
                     if (channelIndex>=0)
                     {
+                        printf("ProcInit : 0060\n");
                         const Bifrost::API::Channel& ch = component.channels()[channelIndex];
                         if (ch.valid())
                         {
+                            printf("ProcInit : 0070\n");
                             // iterate over the tile tree at each level
                             Bifrost::API::Layout layout = component.layout();
                             size_t depthCount = layout.depthCount();
@@ -197,7 +198,45 @@ int ProcInit( struct AtNode *node, void **user_ptr )
 
                                     if ( ch.dataType() == Bifrost::API::FloatV3Type )
                                     {
+                                        printf("ProcInit : 0080\n");
                                         Imath::Box3f particleBound;
+                                        const Bifrost::API::TileData<amino::Math::vec3f>& f3 = ch.tileData<amino::Math::vec3f>( tindex );
+                                        std::vector<amino::Math::vec3f> P(f3.count());
+                                        for (size_t i=0; i<f3.count(); i++ ) {
+                                            // const amino::Math::vec3f& val = f3[i];
+                                            particleBound.extendBy(Imath::V3f(f3[i][0],f3[i][1],f3[i][2]));
+                                        }
+
+
+                                        args->createdNodes.push_back(AiNode("procedural"));
+                                        AtNode *procedural = args->createdNodes.back();
+                                        char proceduralName[256];
+                                        sprintf(proceduralName,"Nested%04lu",proceduralIndex);
+                                        AiNodeSetStr(procedural,"name",proceduralName);
+                                        AiNodeSetStr(procedural,"dso",parentProceduralDSO);
+                                        AiNodeSetBool(procedural,"load_at_init",false);
+                                        /*
+                                          ("radius", po::value<float>(&radius),
+                                           "radius for RIB point geometry.")
+                                          ("velocity-blur", "use velocity for motion blur.")
+                                          ("bif", po::value<std::string>(&bifrost_filename),
+                                           "bifrost filename.")
+                                          ("tile-index", po::value<size_t>(&tileIndex),
+                                           "bifrost tile index.")
+                                          ("tile-depth", po::value<size_t>(&tileDepth),
+                                           "bifrost tile depth.")
+                                          ("emit", "non-root level, perform emission.")
+                                         */
+                                        boost::format formattedDataString = boost::format(
+                                                "%1%" // implicitly contains --bif, --radius, --velocity-blur
+                                                " --tile-index %2%"
+                                                " --tile-depth %3%"
+                                                " --emit")
+                                                % dataString.c_str()
+                                                % t
+                                                % d;
+                                        std::cerr << boost::format("Procedural data string : \"%1%\"") % formattedDataString.str().c_str();
+                                        AiNodeSetStr(procedural,"data",formattedDataString.str().c_str());
 #ifdef USESTUFF
                                         createdNodes.push_back(AiNode("points"));
                                         AtNode *points = createdNodes.back();
