@@ -22,5 +22,5 @@ struct ProcArgs {
     size_t bifrostTileIndex;
     size_t bifrostTileDepth;
     int processDataStringAsArgcArgv(int argc, const char **argv);
-
+    void print() const;
 };

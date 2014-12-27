@@ -48,8 +48,8 @@ int findChannelIndexViaName(const Bifrost::API::Component& component,
 }
 
 bool ProcessBifrostParticleCache(const std::string& bif_filename,
-        const float pointRadius,
-        ProcArgs::AtNodePtrContainer & createdNodes)
+                                 const float pointRadius,
+                                 ProcArgs::AtNodePtrContainer & createdNodes)
 {
     Bifrost::API::String biffile = bif_filename.c_str();
     Bifrost::API::ObjectModel om;
@@ -97,9 +97,9 @@ bool ProcessBifrostParticleCache(const std::string& bif_filename,
                                     P[i] = f3[i];
                                 }
                                 AiNodeSetArray(points, "points",
-                                                           AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
+                                               AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
                                 AiNodeSetArray(points, "radius",
-                                                           AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
+                                               AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
                             }
 
                         }
@@ -133,13 +133,14 @@ int ProcInit( struct AtNode *node, void **user_ptr )
         PI::String2ArgcArgv s2aa(parsingDataString);
         args->processDataStringAsArgcArgv(s2aa.argc(),s2aa.argv());
         printf("ProcInit : 0015\n");
-
+        args->print();
+        printf("ProcInit : 0016\n");
         std::string bif_filename_format = args->bifrostFilename;
 
         char bif_filename[MAX_BIF_FILENAME_LENGTH];
         uint32_t bif_int_frame_number = static_cast<uint32_t>(floor(current_frame));
         int sprintf_status = sprintf(bif_filename,bif_filename_format.c_str(),bif_int_frame_number);
-        printf("ProcInit : 0016 bif_filename_format = \"%s\"\n",bif_filename_format.c_str());
+        printf("ProcInit : 0018 bif_filename_format = \"%s\"\n",bif_filename_format.c_str());
 
         if (args->performEmission)
         {
@@ -148,7 +149,7 @@ int ProcInit( struct AtNode *node, void **user_ptr )
             std::cerr << boost::format("BIFROST ARNOLD PROCEDURAL : bif filename = %1%, frame = %2%, fps = %3%")
                 % bif_filename % current_frame % fps << std::endl;
 
-            ProcessBifrostParticleCache(bif_filename,args->pointRadius,args->createdNodes);
+            // ProcessBifrostParticleCache(bif_filename,args->pointRadius,args->createdNodes);
         }
         else
         {
@@ -199,6 +200,11 @@ int ProcInit( struct AtNode *node, void **user_ptr )
                                     if ( ch.dataType() == Bifrost::API::FloatV3Type )
                                     {
                                         printf("ProcInit : 0080\n");
+                                        printf("parentProceduralDSO = %s\n",parentProceduralDSO);
+// #define USE_SPHERE_TEST
+#ifdef USE_SPHERE_TEST
+                                        args->createdNodes.push_back(AiNode("sphere"));
+#else
                                         Imath::Box3f particleBound;
                                         const Bifrost::API::TileData<amino::Math::vec3f>& f3 = ch.tileData<amino::Math::vec3f>( tindex );
                                         std::vector<amino::Math::vec3f> P(f3.count());
@@ -214,45 +220,37 @@ int ProcInit( struct AtNode *node, void **user_ptr )
                                         sprintf(proceduralName,"Nested%04lu",proceduralIndex);
                                         AiNodeSetStr(procedural,"name",proceduralName);
                                         AiNodeSetStr(procedural,"dso",parentProceduralDSO);
-                                        AiNodeSetBool(procedural,"load_at_init",false);
+                                        AiNodeSetPnt(procedural,"min",particleBound.min.x,particleBound.min.y,particleBound.min.z);
+                                        AiNodeSetPnt(procedural,"max",particleBound.max.x,particleBound.max.y,particleBound.max.z);
+                                        // AiNodeSetBool(procedural,"load_at_init",false);
                                         /*
                                           ("radius", po::value<float>(&radius),
-                                           "radius for RIB point geometry.")
+                                          "radius for RIB point geometry.")
                                           ("velocity-blur", "use velocity for motion blur.")
                                           ("bif", po::value<std::string>(&bifrost_filename),
-                                           "bifrost filename.")
+                                          "bifrost filename.")
                                           ("tile-index", po::value<size_t>(&tileIndex),
-                                           "bifrost tile index.")
+                                          "bifrost tile index.")
                                           ("tile-depth", po::value<size_t>(&tileDepth),
-                                           "bifrost tile depth.")
+                                          "bifrost tile depth.")
                                           ("emit", "non-root level, perform emission.")
-                                         */
-                                        boost::format formattedDataString = boost::format(
-                                                "%1%" // implicitly contains --bif, --radius, --velocity-blur
-                                                " --tile-index %2%"
-                                                " --tile-depth %3%"
-                                                " --emit")
-                                                % dataString.c_str()
-                                                % t
-                                                % d;
-                                        std::cerr << boost::format("Procedural data string : \"%1%\"") % formattedDataString.str().c_str();
+                                        */
+                                        boost::format formattedDataString =
+                                            boost::format(
+                                                          "%1%" /* implicitly contains
+                                                                   --bif,
+                                                                   --radius,
+                                                                   --velocity-blur
+                                                                 */
+                                                          " --tile-index %2%"
+                                                          " --tile-depth %3%"
+                                                          " --emit")
+                                            % dataString.c_str()
+                                            % t
+                                            % d;
+                                        std::cerr << boost::format("Procedural data string : \"%1%\"") % formattedDataString.str().c_str() << std::endl;
                                         AiNodeSetStr(procedural,"data",formattedDataString.str().c_str());
-#ifdef USESTUFF
-                                        createdNodes.push_back(AiNode("points"));
-                                        AtNode *points = createdNodes.back();
-                                        const Bifrost::API::TileData<amino::Math::vec3f>& f3 = ch.tileData<amino::Math::vec3f>( tindex );
-                                        std::vector<amino::Math::vec3f> P(f3.count());
-                                        std::vector<float> radius(f3.count(),pointRadius);
-                                        for (size_t i=0; i<f3.count(); i++ ) {
-                                            const amino::Math::vec3f& val = f3[i];
-                                            // std::cerr << "\t" << val[0] << " " << val[1] << " " << val[2] << std::endl;
-                                            P[i] = f3[i];
-                                        }
-                                        AiNodeSetArray(points, "points",
-                                                                   AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
-                                        AiNodeSetArray(points, "radius",
-                                                                   AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
-#endif
+#endif // USE_SPHERE_TEST
 
                                     }
 
@@ -283,7 +281,9 @@ int ProcCleanup( void *user_ptr )
 int ProcNumNodes( void *user_ptr )
 {
     ProcArgs * args = reinterpret_cast<ProcArgs*>( user_ptr );
-    return (int) args->createdNodes.size();
+    int numNodes = (int) args->createdNodes.size();
+    printf("ProcNumNodes : numNodes = %d\n",numNodes);
+    return numNodes;
 }
 
 struct AtNode* ProcGetNode(void *user_ptr, int i)

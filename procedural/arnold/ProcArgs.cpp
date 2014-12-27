@@ -65,3 +65,13 @@ int ProcArgs::processDataStringAsArgcArgv(int argc, const char **argv)
     }
     return 0;
 }
+
+void ProcArgs::print() const
+{
+    printf("pointRadius              = %f\n",pointRadius);
+    printf("enableVelocityMotionBlur = %s\n",(enableVelocityMotionBlur?"true":"false"));
+    printf("performEmission          = %s\n",(performEmission?"true":"false"));
+    printf("bifrostFilename          = %s\n",bifrostFilename.c_str());
+    printf("bifrostTileIndex         = %zu\n",bifrostTileIndex);
+    printf("bifrostTileDepth         = %zu\n",bifrostTileDepth);
+}
