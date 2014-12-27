@@ -49,8 +49,13 @@ int findChannelIndexViaName(const Bifrost::API::Component& component,
 
 bool ProcessBifrostParticleCache(const std::string& bif_filename,
                                  const float pointRadius,
+                                 const bool enableVelocityMotionBlur,
+                                 size_t bif_tile_index,
+                                 size_t bif_tile_depth,
                                  ProcArgs::AtNodePtrContainer & createdNodes)
 {
+    printf("ProcessBifrostParticleCache : loading \"%s\"\n",bif_filename.c_str());
+
     Bifrost::API::String biffile = bif_filename.c_str();
     Bifrost::API::ObjectModel om;
     Bifrost::API::FileIO fileio = om.createFileIO( biffile );
@@ -72,45 +77,34 @@ bool ProcessBifrostParticleCache(const std::string& bif_filename,
                 const Bifrost::API::Channel& ch = component.channels()[channelIndex];
                 if (ch.valid())
                 {
-                    // iterate over the tile tree at each level
-                    Bifrost::API::Layout layout = component.layout();
-                    size_t depthCount = layout.depthCount();
-                    for ( size_t d=0; d<depthCount; d++ ) {
-                        for ( size_t t=0; t<layout.tileCount(d); t++ ) {
-                            Bifrost::API::TreeIndex tindex(t,d);
-                            if ( !ch.elementCount( tindex ) ) {
-                                // nothing there
-                                continue;
-                            }
-
-                            // std::cout << "tile:" << t << " depth:" << d << std::endl;
-                            if ( ch.dataType() == Bifrost::API::FloatV3Type )
-                            {
-                                createdNodes.push_back(AiNode("points"));
-                                AtNode *points = createdNodes.back();
-                                const Bifrost::API::TileData<amino::Math::vec3f>& f3 = ch.tileData<amino::Math::vec3f>( tindex );
-                                std::vector<amino::Math::vec3f> P(f3.count());
-                                std::vector<float> radius(f3.count(),pointRadius);
-                                for (size_t i=0; i<f3.count(); i++ ) {
-                                    const amino::Math::vec3f& val = f3[i];
-                                    // std::cerr << "\t" << val[0] << " " << val[1] << " " << val[2] << std::endl;
-                                    P[i] = f3[i];
-                                }
-                                AiNodeSetArray(points, "points",
-                                               AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
-                                AiNodeSetArray(points, "radius",
-                                               AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
-                            }
-
-                        }
+                    Bifrost::API::TreeIndex tindex(bif_tile_index,bif_tile_depth);
+                    if ( !ch.elementCount( tindex ) ) {
+                        // nothing there
+                        continue;
                     }
-
+                    
+                    // std::cout << "tile:" << t << " depth:" << d << std::endl;
+                    if ( ch.dataType() == Bifrost::API::FloatV3Type )
+                    {
+                        createdNodes.push_back(AiNode("points"));
+                        AtNode *points = createdNodes.back();
+                        const Bifrost::API::TileData<amino::Math::vec3f>& f3 = ch.tileData<amino::Math::vec3f>( tindex );
+                        std::vector<amino::Math::vec3f> P(f3.count());
+                        std::vector<float> radius(f3.count(),pointRadius);
+                        for (size_t i=0; i<f3.count(); i++ ) {
+                            const amino::Math::vec3f& val = f3[i];
+                            std::cerr << "\t" << val[0] << " " << val[1] << " " << val[2] << std::endl;
+                            P[i] = f3[i];
+                        }
+                        AiNodeSetArray(points, "points",
+                                       AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
+                        AiNodeSetArray(points, "radius",
+                                       AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
+                    }
                 }
             }
- 
         }
     }
-    
     return true;
 }
 
@@ -150,6 +144,12 @@ int ProcInit( struct AtNode *node, void **user_ptr )
                 % bif_filename % current_frame % fps << std::endl;
 
             // ProcessBifrostParticleCache(bif_filename,args->pointRadius,args->createdNodes);
+            ProcessBifrostParticleCache(bif_filename,
+                                        args->pointRadius,
+                                        args->enableVelocityMotionBlur,
+                                        args->bifrostTileIndex,
+                                        args->bifrostTileDepth,
+                                        args->createdNodes);
         }
         else
         {
@@ -223,18 +223,6 @@ int ProcInit( struct AtNode *node, void **user_ptr )
                                         AiNodeSetPnt(procedural,"min",particleBound.min.x,particleBound.min.y,particleBound.min.z);
                                         AiNodeSetPnt(procedural,"max",particleBound.max.x,particleBound.max.y,particleBound.max.z);
                                         // AiNodeSetBool(procedural,"load_at_init",false);
-                                        /*
-                                          ("radius", po::value<float>(&radius),
-                                          "radius for RIB point geometry.")
-                                          ("velocity-blur", "use velocity for motion blur.")
-                                          ("bif", po::value<std::string>(&bifrost_filename),
-                                          "bifrost filename.")
-                                          ("tile-index", po::value<size_t>(&tileIndex),
-                                          "bifrost tile index.")
-                                          ("tile-depth", po::value<size_t>(&tileDepth),
-                                          "bifrost tile depth.")
-                                          ("emit", "non-root level, perform emission.")
-                                        */
                                         boost::format formattedDataString =
                                             boost::format(
                                                           "%1%" /* implicitly contains
