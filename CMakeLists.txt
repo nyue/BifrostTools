@@ -21,7 +21,7 @@ LINK_DIRECTORIES ( ${MAYA_LIBRARY_DIR} )
 IF (APPLE)
   LINK_DIRECTORIES (
     ${BIFROST_BASE_DIR}/plug-ins/bifrost/bin
-    ${BIFROST_BASE_D IR}/Maya.app/Contents/MacOS 
+    ${BIFROST_BASE_DIR}/Maya.app/Contents/MacOS 
     )		     
 ELSE (APPLE)	     
   LINK_DIRECTORIES (
