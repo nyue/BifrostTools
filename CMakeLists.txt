@@ -17,10 +17,10 @@ ELSE ( APPLE )
   SET ( BIFROST_BASE_DIR ${MAYA_LOCATION} )
 ENDIF ()
 
-   LINK_DIRECTORIES ( ${MAYA_LIBRARY_DIR} )
+LINK_DIRECTORIES ( ${MAYA_LIBRARY_DIR} )
 IF (APPLE)
-   LINK_DIRECTORIES (
-     ${BIFROST_BASE_DIR}/plug-ins/bifrost/bin
+  LINK_DIRECTORIES (
+    ${BIFROST_BASE_DIR}/plug-ins/bifrost/bin
     ${BIFROST_BASE_D IR}/Maya.app/Contents/MacOS 
     )		     
 ELSE (APPLE)	     
@@ -30,11 +30,11 @@ ELSE (APPLE)
 ENDIF ()
 
 INCLUDE_DIRECTORIES (
-    ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/common
-    ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostcore/api
-    ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostapi/api
-    ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/aminomath/api
-    )
+  ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/common
+  ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostcore/api
+  ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostapi/api
+  ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/aminomath/api
+  )
 
 # Houdini requirement are stringent and often at odds
 # with other DCC application, as such, we can't build
