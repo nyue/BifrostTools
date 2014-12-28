@@ -10,21 +10,31 @@ INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIR} )
 INCLUDE_DIRECTORIES ( ${S2AA_INCLUDE_DIR} )
 INCLUDE_DIRECTORIES ( ${ILMBASE_INCLUDE_DIRS} )
 
+ADD_DEFINITIONS ( -std=c++0x )
 IF (APPLE)
-  ADD_DEFINITIONS ( -std=c++0x )
+  SET ( BIFROST_BASE_DIR ${MAYA_LOCATION}/.. )
+ELSE ( APPLE )
+  SET ( BIFROST_BASE_DIR ${MAYA_LOCATION} )
+ENDIF ()
+
+   LINK_DIRECTORIES ( ${MAYA_LIBRARY_DIR} )
+IF (APPLE)
+   LINK_DIRECTORIES (
+     ${BIFROST_BASE_DIR}/plug-ins/bifrost/bin
+    ${BIFROST_BASE_D IR}/Maya.app/Contents/MacOS 
+    )		     
+ELSE (APPLE)	     
   LINK_DIRECTORIES (
-    ${MAYA_LOCATION}/../plug-ins/bifrost/bin
-    ${MAYA_LOCATION}/../Maya.app/Contents/MacOS 
-    )
-  INCLUDE_DIRECTORIES (
-    ${MAYA_LOCATION}/../plug-ins/bifrost/include/common
-    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/bifrostcore/api
-    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/bifrostapi/api
-    ${MAYA_LOCATION}/../plug-ins/bifrost/include/modules/aminomath/api
+    ${BIFROST_BASE_DIR}/plug-ins/bifrost/lib
     )
 ENDIF ()
 
-
+INCLUDE_DIRECTORIES (
+    ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/common
+    ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostcore/api
+    ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostapi/api
+    ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/aminomath/api
+    )
 
 # Houdini requirement are stringent and often at odds
 # with other DCC application, as such, we can't build
