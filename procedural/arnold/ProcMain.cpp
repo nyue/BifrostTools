@@ -178,12 +178,17 @@ int ProcInit( struct AtNode *node, void **user_ptr )
                 if (componentType == Bifrost::API::PointComponentType)
                 {
                     printf("ProcInit : 0050\n");
-                    int channelIndex = findChannelIndexViaName(component,"position");
-                    if (channelIndex>=0)
+                    int positionChannelIndex = findChannelIndexViaName(component,"position");
+                    int velocityChannelIndex = findChannelIndexViaName(component,"velocity");
+                    if (positionChannelIndex>=0)
                     {
                         printf("ProcInit : 0060\n");
-                        const Bifrost::API::Channel& ch = component.channels()[channelIndex];
-                        if (ch.valid())
+                        const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
+                        const Bifrost::API::Channel& velocity_ch = component.channels()[velocityChannelIndex];
+                        if (position_ch.valid()
+                            &&
+                            (args->enableVelocityMotionBlur?velocity_ch.valid():true) // check conditionally
+                            )
                         {
                             printf("ProcInit : 0070\n");
                             // iterate over the tile tree at each level
@@ -192,12 +197,12 @@ int ProcInit( struct AtNode *node, void **user_ptr )
                             for ( size_t d=0; d<depthCount; d++ ) {
                                 for ( size_t t=0; t<layout.tileCount(d); t++ ) {
                                     Bifrost::API::TreeIndex tindex(t,d);
-                                    if ( !ch.elementCount( tindex ) ) {
+                                    if ( !position_ch.elementCount( tindex ) ) {
                                         // nothing there
                                         continue;
                                     }
 
-                                    if ( ch.dataType() == Bifrost::API::FloatV3Type )
+                                    if ( position_ch.dataType() == Bifrost::API::FloatV3Type )
                                     {
                                         printf("ProcInit : 0080\n");
                                         printf("parentProceduralDSO = %s\n",parentProceduralDSO);
@@ -206,11 +211,15 @@ int ProcInit( struct AtNode *node, void **user_ptr )
                                         args->createdNodes.push_back(AiNode("sphere"));
 #else
                                         Imath::Box3f particleBound;
-                                        const Bifrost::API::TileData<amino::Math::vec3f>& f3 = ch.tileData<amino::Math::vec3f>( tindex );
-                                        std::vector<amino::Math::vec3f> P(f3.count());
-                                        for (size_t i=0; i<f3.count(); i++ ) {
+                                        const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
+                                        std::vector<amino::Math::vec3f> P(position_tile_data.count());
+                                        for (size_t i=0; i<position_tile_data.count(); i++ ) {
                                             // const amino::Math::vec3f& val = f3[i];
-                                            particleBound.extendBy(Imath::V3f(f3[i][0],f3[i][1],f3[i][2]));
+                                            particleBound.extendBy(Imath::V3f(position_tile_data[i][0],position_tile_data[i][1],position_tile_data[i][2]));
+                                            if (args->enableVelocityMotionBlur)
+                                            {
+                                                // Extend further with velocity information scaled to FPS
+                                            }
                                         }
 
 
