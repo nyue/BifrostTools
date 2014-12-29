@@ -52,7 +52,7 @@ int ProcArgs::processDataStringAsArgcArgv(int argc, const char **argv)
         }
         pointRadius = radius;
         bifrostFilename = bifrost_filename;
-        std::cout << "XXXXXXXXXXXXXX bifrost_filename : " << bifrost_filename << std::endl;
+        // std::cout << "XXXXXXXXXXXXXX bifrost_filename : " << bifrost_filename << std::endl;
         bifrostTileIndex = tileIndex;
         bifrostTileDepth = tileDepth;
     }
