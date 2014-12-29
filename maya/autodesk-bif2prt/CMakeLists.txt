@@ -26,5 +26,6 @@ TARGET_LINK_LIBRARIES ( bif2prt
   bifrostcore
   bifrostapi
   Base
+  ${ZLIB_LIBRARY}
   )
 
