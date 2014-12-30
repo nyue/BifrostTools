@@ -1,0 +1,288 @@
+// -*- c++ -*-
+
+/*!
+ * DESIGN : The procedural recurse one level. Root level does splitting,
+ *          subsequent level does geometry emission
+ */
+bool ProcessBifrostParticleCache(const std::string& bif_filename,
+                                 const float pointRadius,
+                                 const float fps_1,
+                                 const bool enableVelocityMotionBlur,
+                                 size_t bif_tile_index,
+                                 size_t bif_tile_depth,
+                                 ProcArgs::AtNodePtrContainer & createdNodes)
+{
+    // printf("ProcessBifrostParticleCache : loading \"%s\"\n",bif_filename.c_str());
+
+    Bifrost::API::String biffile = bif_filename.c_str();
+    Bifrost::API::ObjectModel om;
+    Bifrost::API::FileIO fileio = om.createFileIO( biffile );
+    Bifrost::API::StateServer ss = fileio.load( );
+    if ( !ss.valid() ) {
+        return false;
+    }
+
+    size_t numComponents = ss.components().count();
+    for (size_t componentIndex=0;componentIndex<numComponents;componentIndex++)
+    {
+        Bifrost::API::Component component = ss.components()[componentIndex];
+        Bifrost::API::TypeID componentType = component.type();
+        if (componentType == Bifrost::API::PointComponentType)
+        {
+            int positionChannelIndex = findChannelIndexViaName(component,"position");
+            int velocityChannelIndex = findChannelIndexViaName(component,"velocity");
+            if (positionChannelIndex>=0)
+            {
+                const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
+                const Bifrost::API::Channel& velocity_ch = component.channels()[velocityChannelIndex];
+                if (position_ch.valid()
+                    &&
+                    (enableVelocityMotionBlur?velocity_ch.valid():true) // check conditionally
+                    )
+                {
+                    Bifrost::API::TreeIndex tindex(bif_tile_index,bif_tile_depth);
+                    if ( !position_ch.elementCount( tindex ) ) {
+                        // nothing there
+                        continue;
+                    }
+                    
+                    // std::cout << "tile:" << t << " depth:" << d << std::endl;
+                    if ( position_ch.dataType() == Bifrost::API::FloatV3Type
+                         &&
+                         (enableVelocityMotionBlur?(velocity_ch.dataType() == Bifrost::API::FloatV3Type):true) // check conditionally
+                         )
+                    {
+                        createdNodes.push_back(AiNode("points"));
+                        AtNode *points = createdNodes.back();
+                        const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
+                        const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
+                        std::vector<amino::Math::vec3f> P(position_tile_data.count());
+                        std::vector<amino::Math::vec3f> PP;
+                        if (enableVelocityMotionBlur)
+                            PP.resize(position_tile_data.count());
+                        std::vector<float> radius(position_tile_data.count(),pointRadius);
+                        for (size_t i=0; i<position_tile_data.count(); i++ ) {
+                            // const amino::Math::vec3f& val = position_tile_data[i];
+                            // std::cerr << "\t" << val[0] << " " << val[1] << " " << val[2] << std::endl;
+                            P[i] = position_tile_data[i];
+                            if (enableVelocityMotionBlur)
+                            {
+                                PP[i][0] = P[i][0] +  fps_1 * velocity_tile_data[i][0];
+                                PP[i][1] = P[i][1] +  fps_1 * velocity_tile_data[i][1];
+                                PP[i][2] = P[i][2] +  fps_1 * velocity_tile_data[i][2];
+                            }
+                        }
+                        if (enableVelocityMotionBlur)
+                        {
+                            AtArray *vlistArray = 0;
+                            vlistArray = AiArrayAllocate(P.size(),2,AI_TYPE_POINT);
+
+                            AiArraySetKey(vlistArray, 0, &(P[0]));
+                            AiArraySetKey(vlistArray, 1, &(PP[0]));
+                            AiNodeSetArray(points, "points",vlistArray);
+                        }
+                        else
+                        {
+                            AiNodeSetArray(points, "points",
+                                           AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
+                        }
+                        AiNodeSetArray(points, "radius",
+                                       AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
+                    }
+                    else
+                    {
+                        AiMsgWarning("Bifrost-procedural : Position channel not of FloatV3Type or velocity channel not of FloatV3Type where velocity motion blur is requested");
+                    }
+                }
+                else
+                {
+                    AiMsgWarning("Bifrost-procedural : Position channel not found or velocity channel not found where velocity motion blur is requested");
+                }
+            }
+        }
+    }
+    return true;
+}
+
+int ProcInitNestedProceduralWIP( struct AtNode *node, void **user_ptr )
+{
+    // printf("ProcInit : 0001\n");
+    ProcArgs * args = new ProcArgs();
+    args->proceduralNode = node;
+
+    const char *parentProceduralDSO = AiNodeGetStr(node,"dso");
+    std::string dataString = AiNodeGetStr(node,"data");
+    // printf("ProcInit : 0002 dataString = \"%s\"\n",dataString.c_str());
+    if (dataString.size() != 0)
+    {
+        // printf("ProcInit : 0010\n");
+        const float current_frame = AiNodeGetFlt(AiUniverseGetOptions(), "frame");
+        const float fps = AiNodeGetFlt(AiUniverseGetOptions(), "fps");
+
+        std::string parsingDataString = (boost::format("%1% %2%") % parentProceduralDSO % dataString.c_str()).str();
+        PI::String2ArgcArgv s2aa(parsingDataString);
+        args->processDataStringAsArgcArgv(s2aa.argc(),s2aa.argv());
+        // printf("ProcInit : 0015\n");
+        // args->print();
+        // printf("ProcInit : 0016\n");
+        std::string bif_filename_format = args->bifrostFilename;
+
+        char bif_filename[MAX_BIF_FILENAME_LENGTH];
+        uint32_t bif_int_frame_number = static_cast<uint32_t>(floor(current_frame));
+        int sprintf_status = sprintf(bif_filename,bif_filename_format.c_str(),bif_int_frame_number);
+        // printf("ProcInit : 0018 bif_filename_format = \"%s\"\n",bif_filename_format.c_str());
+
+        if (args->performEmission)
+        {
+            // printf("ProcInit : 0020\n");
+            // Emit Arnold geometry
+            /*
+              std::cerr << boost::format("BIFROST ARNOLD PROCEDURAL : bif filename = %1%, frame = %2%, fps = %3%")
+              % bif_filename % current_frame % fps << std::endl;
+            */
+            // ProcessBifrostParticleCache(bif_filename,args->pointRadius,args->createdNodes);
+            ProcessBifrostParticleCache(bif_filename,
+                                        args->pointRadius,
+                                        1.0f/fps,
+                                        args->enableVelocityMotionBlur,
+                                        args->bifrostTileIndex,
+                                        args->bifrostTileDepth,
+                                        args->createdNodes);
+        }
+        else
+        {
+            // printf("ProcInit : 0030\n");
+            /*!
+             * \remark Iterate through each tile in the bifrost file,
+             *         determine the bounds for that tile (including
+             *         velocity blur growth) and generate a procedural
+             *         for that tile of particle data
+             */
+            // printf("ProcInit : 0031 bif_filename = \"%s\"\n",bif_filename);
+            Bifrost::API::String biffile = bif_filename;
+            Bifrost::API::ObjectModel om;
+            Bifrost::API::FileIO fileio = om.createFileIO( biffile );
+            Bifrost::API::StateServer ss = fileio.load( );
+            if ( !ss.valid() ) {
+                return false;
+            }
+            size_t proceduralIndex = 0;
+            size_t numComponents = ss.components().count();
+            for (size_t componentIndex=0;componentIndex<numComponents;componentIndex++)
+            {
+                // printf("ProcInit : 0040\n");
+                Bifrost::API::Component component = ss.components()[componentIndex];
+                Bifrost::API::TypeID componentType = component.type();
+                if (componentType == Bifrost::API::PointComponentType)
+                {
+                    // printf("ProcInit : 0050\n");
+                    int positionChannelIndex = findChannelIndexViaName(component,"position");
+                    int velocityChannelIndex = findChannelIndexViaName(component,"velocity");
+                    if (positionChannelIndex>=0)
+                    {
+                        // printf("ProcInit : 0060\n");
+                        const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
+                        const Bifrost::API::Channel& velocity_ch = component.channels()[velocityChannelIndex];
+                        if (position_ch.valid()
+                            &&
+                            (args->enableVelocityMotionBlur?velocity_ch.valid():true) // check conditionally
+                            )
+                        {
+                            // printf("ProcInit : 0070\n");
+                            // iterate over the tile tree at each level
+                            Bifrost::API::Layout layout = component.layout();
+                            size_t depthCount = layout.depthCount();
+                            for ( size_t d=0; d<depthCount; d++ ) {
+                                for ( size_t t=0; t<layout.tileCount(d); t++ ) {
+                                    Bifrost::API::TreeIndex tindex(t,d);
+                                    if ( !position_ch.elementCount( tindex ) ) {
+                                        // nothing there
+                                        continue;
+                                    }
+
+                                    if ( position_ch.dataType() == Bifrost::API::FloatV3Type
+                                         &&
+                                         (args->enableVelocityMotionBlur?(velocity_ch.dataType() == Bifrost::API::FloatV3Type):true) // check conditionally
+                                         )
+                                    {
+                                        // printf("ProcInit : 0080\n");
+                                        // printf("parentProceduralDSO = %s\n",parentProceduralDSO);
+                                        // #define USE_SPHERE_TEST
+#ifdef USE_SPHERE_TEST
+                                        args->createdNodes.push_back(AiNode("sphere"));
+#else
+                                        Imath::Box3f particleBound;
+                                        const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
+                                        const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
+                                        // std::vector<amino::Math::vec3f> P(position_tile_data.count());
+                                        for (size_t i=0; i<position_tile_data.count(); i++ ) {
+                                            // const amino::Math::vec3f& val = f3[i];
+                                            particleBound.extendBy(Imath::V3f(position_tile_data[i][0],
+                                                                              position_tile_data[i][1],
+                                                                              position_tile_data[i][2]));
+                                            if (args->enableVelocityMotionBlur)
+                                            {
+                                                // Extend further with velocity information scaled to FPS
+                                                Imath::V3f blurred_position =
+                                                    Imath::V3f(position_tile_data[i][0],
+                                                               position_tile_data[i][1],
+                                                               position_tile_data[i][2]);
+                                                blurred_position +=
+                                                    ((1.0f/fps) * Imath::V3f(velocity_tile_data[i][0],
+                                                                             velocity_tile_data[i][1],
+                                                                             velocity_tile_data[i][2]));
+                                                particleBound.extendBy(blurred_position);
+                                            }
+                                        }
+
+
+                                        args->createdNodes.push_back(AiNode("procedural"));
+                                        AtNode *procedural = args->createdNodes.back();
+                                        char proceduralName[256];
+                                        sprintf(proceduralName,"Nested%04lu",proceduralIndex);
+                                        // AiNodeSetStr(procedural,"name",proceduralName);
+                                        AiNodeSetStr(procedural,"dso",parentProceduralDSO);
+                                        AiNodeSetPnt(procedural,"min",particleBound.min.x,particleBound.min.y,particleBound.min.z);
+                                        AiNodeSetPnt(procedural,"max",particleBound.max.x,particleBound.max.y,particleBound.max.z);
+                                        // AiNodeSetBool(procedural,"load_at_init",false);
+                                        boost::format formattedDataString =
+                                            boost::format(
+                                                          "%1%" /* implicitly contains
+                                                                   --bif,
+                                                                   --radius,
+                                                                   --velocity-blur
+                                                                */
+                                                          " --tile-index %2%"
+                                                          " --tile-depth %3%"
+                                                          " --emit")
+                                            % dataString.c_str()
+                                            % t
+                                            % d;
+                                        // std::cerr << boost::format("Procedural data string : \"%1%\"") % formattedDataString.str().c_str() << std::endl;
+                                        AiNodeSetStr(procedural,"data",formattedDataString.str().c_str());
+#endif // USE_SPHERE_TEST
+
+                                    }
+                                    else
+                                    {
+                                        AiMsgWarning("Bifrost-procedural : Position channel not of FloatV3Type or velocity channel not of FloatV3Type where velocity motion blur is requested");
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            AiMsgWarning("Bifrost-procedural : Position channel not found or velocity channel not found where velocity motion blur is requested");
+                        }
+                    }
+
+                }
+            }
+
+        }
+    }
+
+    *user_ptr = args;
+
+    return true;
+}
