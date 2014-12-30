@@ -19,53 +19,25 @@ int main(int argc, char **argv)
     Bifrost::API::String biffile = argv[1];
     Bifrost::API::ObjectModel om;
     Bifrost::API::FileIO fileio = om.createFileIO( biffile );
-    Bifrost::API::StateServer ss = fileio.load( );
+    const Bifrost::API::BIF::FileInfo& info = fileio.info();
 
-    if ( !ss.valid() ) {
-        std::cerr << "bifinfo : file loading error" << std::endl;
-        exit(1);
-    }
-    
-    size_t numComponents = ss.components().count();
-    std::cout << "Number of components : " << numComponents << std::endl;
-    for (size_t i=0;i<numComponents;i++)
+    std::cout << boost::format("Version        : %1%") % info.version << std::endl;
+    std::cout << boost::format("Frame          : %1%") % info.frame << std::endl;
+    std::cout << boost::format("Channel count  : %1%") % info.channelCount << std::endl;
+    std::cout << boost::format("Component name : %1%") % info.componentName.c_str() << std::endl;
+    std::cout << boost::format("Component type : %1%") % info.componentType << std::endl;
+    std::cout << boost::format("Object name    : %1%") % info.objectName.c_str() << std::endl;
+    std::cout << boost::format("Layout name    : %1%") % info.layoutName.c_str() << std::endl;
+
+    for (size_t channelIndex=0;channelIndex<info.channelCount;channelIndex++)
     {
-        Bifrost::API::Component component = ss.components()[i];
-        Bifrost::API::TypeID componentType = component.type();
-        if (componentType == Bifrost::API::PointComponentType)
-        {
-            std::cout << "Point component : "
-            		<< component.name().c_str()
-    				<< std::endl;
-
-            Bifrost::API::RefArray channels = component.channels();
-            size_t particleCount = component.elementCount();
-            size_t channelCount = channels.count();
-            for (size_t channelIndex=0;channelIndex<channelCount;channelIndex++)
-            {
-            	const Bifrost::API::Channel& ch = channels[channelIndex];
-            	Bifrost::API::String channelName = ch.name();
-            	Bifrost::API::DataType channelDataType = ch.dataType();
-            	std::cout << boost::format("\tChannel[%1%] of type %2% : %3% has %4% particles")
-            		% channelIndex % channelDataType % channelName.c_str() % channelCount << std::endl;
-            }
-        }
-        else if (componentType == Bifrost::API::VoxelComponentType)
-        {
-            std::cout << "Voxel component : "
-            		<< component.name().c_str()
-    				<< std::endl;
-            Bifrost::API::RefArray channels = component.channels();
-            size_t channelCount = channels.count();
-            for (size_t channelIndex=0;channelIndex<channelCount;channelIndex++)
-            {
-            	Bifrost::API::String channelName = Bifrost::API::Base(channels[channelIndex]).name();
-                std::cout << "\tChannel : "
-                		<< channelName.c_str()
-        				<< std::endl;
-            }
-        }
+        std::cout << std::endl;
+        const Bifrost::API::BIF::FileInfo::ChannelInfo& channelInfo = fileio.channelInfo(channelIndex);
+        std::cout << boost::format("        Channel name  : %1%") % channelInfo.name.c_str() << std::endl;
+        std::cout << boost::format("        Data type     : %1%") % channelInfo.dataType << std::endl;
+        std::cout << boost::format("        Max depth     : %1%") % channelInfo.maxDepth << std::endl;
+        std::cout << boost::format("        Tile count    : %1%") % channelInfo.tileCount << std::endl;
+        std::cout << boost::format("        Element count : %1%") % channelInfo.elementCount << std::endl;
     }
-
-    exit(0);
+    return 0;
 }
