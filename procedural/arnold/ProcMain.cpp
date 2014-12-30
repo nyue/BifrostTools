@@ -56,7 +56,7 @@ int ProcInit( struct AtNode *node, void **user_ptr )
     {
         // printf("ProcInit : 0010\n");
         const float current_frame = AiNodeGetFlt(AiUniverseGetOptions(), "frame");
-        const float fps_1 = 1.0f/AiNodeGetFlt(AiUniverseGetOptions(), "fps");
+        const float fps_1 = 1.0f;//1.0f/AiNodeGetFlt(AiUniverseGetOptions(), "fps");
 
         std::string parsingDataString = (boost::format("%1% %2%") % parentProceduralDSO % dataString.c_str()).str();
         PI::String2ArgcArgv s2aa(parsingDataString);
