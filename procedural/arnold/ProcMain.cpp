@@ -129,38 +129,41 @@ int ProcInit( struct AtNode *node, void **user_ptr )
                                     AtNode *points = args->createdNodes.back();
                                     const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
                                     const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
-                                    std::vector<amino::Math::vec3f> P(position_tile_data.count());
-                                    std::vector<amino::Math::vec3f> PP;
-                                    if (args->enableVelocityMotionBlur)
-                                        PP.resize(position_tile_data.count());
-                                    std::vector<float> radius(position_tile_data.count(),args->pointRadius);
-                                    for (size_t i=0; i<position_tile_data.count(); i++ ) {
-                                        // const amino::Math::vec3f& val = position_tile_data[i];
-                                        // std::cerr << "\t" << val[0] << " " << val[1] << " " << val[2] << std::endl;
-                                        P[i] = position_tile_data[i];
+                                    if (position_tile_data.count() == velocity_tile_data.count())
+                                    {
+                                        std::vector<amino::Math::vec3f> P(position_tile_data.count());
+                                        std::vector<amino::Math::vec3f> PP;
+                                        if (args->enableVelocityMotionBlur)
+                                            PP.resize(position_tile_data.count());
+                                        std::vector<float> radius(position_tile_data.count(),args->pointRadius);
+                                        for (size_t i=0; i<position_tile_data.count(); i++ ) {
+                                            P[i] = position_tile_data[i];
+                                            if (args->enableVelocityMotionBlur)
+                                            {
+                                                PP[i][0] = P[i][0] +  args->velocityScale * fps_1 * velocity_tile_data[i][0];
+                                                PP[i][1] = P[i][1] +  args->velocityScale * fps_1 * velocity_tile_data[i][1];
+                                                PP[i][2] = P[i][2] +  args->velocityScale * fps_1 * velocity_tile_data[i][2];
+                                            }
+                                        }
                                         if (args->enableVelocityMotionBlur)
                                         {
-                                            PP[i][0] = P[i][0] +  fps_1 * velocity_tile_data[i][0];
-                                            PP[i][1] = P[i][1] +  fps_1 * velocity_tile_data[i][1];
-                                            PP[i][2] = P[i][2] +  fps_1 * velocity_tile_data[i][2];
+                                            AtArray *vlistArray = 0;
+                                            vlistArray = AiArrayAllocate(P.size(),2,AI_TYPE_POINT);
+                                            
+                                            AiArraySetKey(vlistArray, 0, &(P[0]));
+                                            AiArraySetKey(vlistArray, 1, &(PP[0]));
+                                            AiNodeSetArray(points, "points",vlistArray);
                                         }
+                                        else
+                                        {
+                                            AiNodeSetArray(points, "points",
+                                                           AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
+                                        }
+                                        AiNodeSetArray(points, "radius",
+                                                       AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
+                                        AiNodeSetInt(points,"mode",args->pointMode);
+                                        
                                     }
-                                    if (args->enableVelocityMotionBlur)
-                                    {
-                                        AtArray *vlistArray = 0;
-                                        vlistArray = AiArrayAllocate(P.size(),2,AI_TYPE_POINT);
-
-                                        AiArraySetKey(vlistArray, 0, &(P[0]));
-                                        AiArraySetKey(vlistArray, 1, &(PP[0]));
-                                        AiNodeSetArray(points, "points",vlistArray);
-                                    }
-                                    else
-                                    {
-                                        AiNodeSetArray(points, "points",
-                                                       AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
-                                    }
-                                    AiNodeSetArray(points, "radius",
-                                                   AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
                                 }
                                 else
                                 {

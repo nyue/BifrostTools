@@ -15,7 +15,9 @@ struct ProcArgs {
     ProcArgs();
     AtNode * proceduralNode;
     AtNodePtrContainer createdNodes;
+    float velocityScale;
     float pointRadius;
+    size_t pointMode;
     bool enableVelocityMotionBlur;
     bool performEmission;
     std::string bifrostFilename;
