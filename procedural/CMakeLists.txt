@@ -1,1 +1,2 @@
 ADD_SUBDIRECTORY ( arnold )
+ADD_SUBDIRECTORY ( renderman )

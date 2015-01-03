@@ -1,0 +1,37 @@
+# RenderMan implementation selection
+IF ( USE_PRMAN )
+  FIND_PACKAGE ( PRMan REQUIRED )
+  SET ( RENDERMAN_INSTALLATION_DIR PRMan )
+ELSE ()
+  FIND_PACKAGE ( Delight REQUIRED )
+  SET ( RENDERMAN_INCLUDE_DIR ${DELIGHT_INCLUDE_DIR} CACHE STRING "RenderMan include directory" )
+  SET ( RENDERMAN_RIBCLIENT_LIBRARY ${DELIGHT_3delight_LIBRARY} CACHE STRING "RenderMan ribclient library")
+  SET ( RENDERMAN_INSTALLATION_DIR 3delight )
+ENDIF ()
+
+INCLUDE_DIRECTORIES ( ${RENDERMAN_INCLUDE_DIR} )
+
+ADD_LIBRARY ( bifrost_renderman SHARED
+  BifrostProcedural.cpp
+  )
+
+TARGET_LINK_LIBRARIES ( bifrost_renderman
+  ${Boost_LIBRARIES}
+  bifrostcore
+  bifrostapi
+  Base
+  ${RENDERMAN_RIBCLIENT_LIBRARY}
+  )
+
+SET_TARGET_PROPERTIES ( bifrost_renderman
+  PROPERTIES
+  OUTPUT_NAME bifrost
+  PREFIX ""
+  )
+
+# ARNOLD_SET_LIBRARY_PROPERTIES ( bifrost_renderman )
+INSTALL ( TARGETS
+  bifrost_renderman
+  RUNTIME DESTINATION dso/${RENDERMAN_INSTALLATION_DIR} COMPONENT Runtime
+  LIBRARY DESTINATION dso/${RENDERMAN_INSTALLATION_DIR} COMPONENT Runtime
+  )

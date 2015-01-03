@@ -7,8 +7,8 @@ IF (WIN32)
   ADD_DEFINITIONS( /D_CRT_SECURE_NO_WARNINGS )
 ENDIF (WIN32)
 
-ADD_LIBRARY ( bifrost SHARED ProcMain.cpp ProcArgs.cpp )
-TARGET_LINK_LIBRARIES ( bifrost
+ADD_LIBRARY ( bifrost_arnold SHARED ProcMain.cpp ProcArgs.cpp )
+TARGET_LINK_LIBRARIES ( bifrost_arnold
   ${Arnold_ai_LIBRARY}
   ${Boost_LIBRARIES}
   bifrostcore
@@ -16,10 +16,14 @@ TARGET_LINK_LIBRARIES ( bifrost
   Base
   )
 
-ARNOLD_SET_LIBRARY_PROPERTIES ( bifrost )
+SET_TARGET_PROPERTIES ( bifrost_arnold
+  PROPERTIES OUTPUT_NAME bifrost
+  )
+
+ARNOLD_SET_LIBRARY_PROPERTIES ( bifrost_arnold )
 
 INSTALL ( TARGETS
-  bifrost
-  RUNTIME DESTINATION dso COMPONENT Runtime
-  LIBRARY DESTINATION dso COMPONENT Runtime
+  bifrost_arnold
+  RUNTIME DESTINATION dso/arnold COMPONENT Runtime
+  LIBRARY DESTINATION dso/arnold COMPONENT Runtime
   )
