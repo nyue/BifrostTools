@@ -14,6 +14,7 @@ TARGET_LINK_LIBRARIES ( bifrost_arnold
   bifrostcore
   bifrostapi
   Base
+  utils
   )
 
 SET_TARGET_PROPERTIES ( bifrost_arnold

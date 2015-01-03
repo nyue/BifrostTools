@@ -1,4 +1,5 @@
 #include "ProcArgs.h"
+#include <utils/BifrostUtils.h>
 #include <ai.h>
 #include <string.h>
 #include <boost/format.hpp>
@@ -20,28 +21,6 @@
 // Bifrost headers - END
 
 const size_t MAX_BIF_FILENAME_LENGTH = 4096;
-
-int findChannelIndexViaName(const Bifrost::API::Component& component,
-                            const Bifrost::API::String& searchChannelName)
-{
-    Bifrost::API::RefArray channels = component.channels();
-    size_t particleCount = component.elementCount();
-    size_t channelCount = channels.count();
-    for (size_t channelIndex=0;channelIndex<channelCount;channelIndex++)
-    {
-        const Bifrost::API::Channel& ch = channels[channelIndex];
-        Bifrost::API::String channelName = ch.name();
-        if (channelName.find(searchChannelName) != Bifrost::API::String::npos)
-        {
-            //            std::cout << boost::format("ARNOLD BIFROST FOUND CHANNEL %1% MATCHING %2%")
-            //            % channelName.c_str()
-            //            % searchChannelName.c_str()
-            //            << std::endl;
-            return channelIndex;
-        }
-    }
-    return -1;
-}
 
 int ProcInit( struct AtNode *node, void **user_ptr )
 {

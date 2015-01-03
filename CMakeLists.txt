@@ -39,12 +39,14 @@ ELSE (APPLE)
 ENDIF ()
 
 INCLUDE_DIRECTORIES (
+  .
   ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/common
   ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostcore/api
   ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostapi/api
   ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/aminomath/api
   )
 
+ADD_SUBDIRECTORY ( utils )
 # Houdini requirement are stringent and often at odds
 # with other DCC application, as such, we can't build
 # them together.
