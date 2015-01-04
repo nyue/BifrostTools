@@ -1,0 +1,77 @@
+global proc AEBifrostCacheFileNameNew(string $fileNameAttr)
+{
+	setUITemplate -pst attributeEditorTemplate;
+		columnLayout -adj true;
+			rowLayout -nc 3 fileNameLayout;
+
+        		text -label "Bifrost cache" fileNameText;
+		        textField fileNameField;
+		            symbolButton -image "navButtonBrowse.png" browser;
+
+            setParent ..;
+		setParent ..;
+	setParent ..;
+
+	AEBifrostCacheFileNameReplace( $fileNameAttr );
+}
+
+
+// This is the procedure to open a file browser to choose a cache file
+//
+global proc AEBifrostCacheCacheFileBrowser( string $fileNameAttr )
+{
+    // prepare filter and starting dir for file dialog
+    string $filter = "Bifrost (*.bif);;"
+                      + "All (*.*)";
+
+    // choose a file to import
+    string $result[] = `fileDialog2
+            -returnFilter 1
+            -fileFilter $filter
+            -dialogStyle 2
+            -caption "Bifrost Cache"
+            -fileMode 1
+            `;
+    if (size($result) == 0 || size($result[0]) == 0) {
+        // cancelled
+        return;
+    }
+
+    // set the file name attribute of the cache node
+    setAttr $fileNameAttr -type "string" $result[0];
+
+    // This will force an update to display the effects
+    // of the new cachefile.
+    //
+    currentTime `currentTime -q`;
+}
+
+
+global proc AEBifrostCacheFileNameReplace(string $fileNameAttr)
+{
+	string $fileName = `getAttr $fileNameAttr`;
+    string $nodeName = `plugNode $fileNameAttr`;
+
+	// file name attribute
+	//
+    connectControl -fileName fileNameField $fileNameAttr;
+    button -e -c ("AEBifrostCacheCacheFileBrowser " + $fileNameAttr) browser;
+}
+
+global proc AEBifrostSurfaceShapeTemplate(string $nodeName)
+{
+    editorTemplate -beginScrollLayout;
+
+    editorTemplate -beginLayout "Bifrost Configuration" -collapse false;
+	editorTemplate -callCustom AEBifrostCacheFileNameNew AEBifrostCacheFileNameReplace "BifrostFile";
+	// editorTemplate -l "Particle width" -addControl "width";
+	editorTemplate -l "Geometry chunk" -addControl "chunk";
+	editorTemplate -l "Enable velocity blur" -addControl "velocityBlur";
+    editorTemplate -endLayout;
+
+    // include/call base class/node attributes
+    AEdependNodeTemplate $nodeName;
+
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+}

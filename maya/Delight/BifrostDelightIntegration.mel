@@ -1,0 +1,123 @@
+// This is required by 3Delight and the function name MUST remain as-is
+global proc
+DL_userGetGeoTypeData (string $node_types[],
+                       string $plugin_requirements[],
+                       string $cache_commands[],
+                       string $not_used[])
+{
+	$node_types[0] = "BifrostSurfaceShape";
+	$plugin_requirements[0] = "";
+	$cache_commands[0] = "BifrostSurfaceShapeCache";
+}
+
+// This is required by 3Delight and the function name MUST remain as-is or match DL_<node>CanUseObjectInstance
+global proc int
+DL_BifrostSurfaceShapeCanUseObjectInstance (string $shape_name)
+{
+	// print("3DL archiving for procedural : " + $shape_name + "\n");
+	// BifrostSystemCommand -hg $shape_name; # Uncomment for new procedural
+	// BifrostSystemCommand -dad $shape_name; // required for old procedural
+	return 0;
+}
+
+global proc pi_CreateBifrostSurfaceShape()
+{
+	string $empTransform = `createNode transform`;
+	string $empSurfaceShape = `createNode BifrostSurfaceShape -p $empTransform`;
+	connectAttr -f "time1.outTime" ($empSurfaceShape+".time");
+	connectAttr -f ($empSurfaceShape+".instObjGroups[0]") "initialShadingGroup.dagSetMembers[0]"; // Default light linking
+}
+
+global proc pi_SetProceduralPath(string $procedural_path)
+{
+	// print("Input procedural_path = " + $procedural_path + "\n");
+	// First, find out if the selected node is a 3delight render node, bail if not, else continue
+	string $selection[] = `ls -selection`;
+	if (size($selection) != 1)
+	{
+		warning("Select a 3Delight render pass node\n");
+		return;
+	}
+	string $node_type = `nodeType $selection[0]`;
+	if ($node_type != "delightRenderPass")
+	{
+		warning("Selected node is not a 3Delight render pass node, hence, not updating\n");
+		return;
+	}
+	string $node_name = $selection[0];
+	// print($node_name + "\n");
+	string $command_string = "getAttr " + $node_name + ".proceduralPath";
+	string $current_procedural_path = eval($command_string);
+	// print ($current_procedural_path + "\n");
+	string $command_string = "setAttr -type \"string\" " + $node_name + ".proceduralPath " + "\"" + $current_procedural_path + ";" + $procedural_path + "\"";
+	// print("About to execute command " + $command_string + "\n");
+	eval($command_string);
+	// setAttr -type "string" fullRenderPass.proceduralPath "@;/abc"; 
+}
+
+global proc pi_SetShaderPath(string $shader_path)
+{
+	string $selection[] = `ls -selection`;
+	if (size($selection) != 1)
+	{
+		warning("Select a 3Delight render pass node\n");
+		return;
+	}
+	string $node_type = `nodeType $selection[0]`;
+	if ($node_type != "delightRenderPass")
+	{
+		warning("Selected node is not a 3Delight render pass node, hence, not updating\n");
+		return;
+	}
+	string $node_name = $selection[0];
+	// print($node_name + "\n");
+	string $command_string = "getAttr " + $node_name + ".shaderPath";
+	string $current_shader_path = eval($command_string);
+	// print ($current_shader_path + "\n");
+	string $command_string = "setAttr -type \"string\" " + $node_name + ".shaderPath " + "\"" + $current_shader_path + ";" + $shader_path + "\"";
+	// print("About to execute command " + $command_string + "\n");
+	eval($command_string);
+	// setAttr -type "string" fullRenderPass.shaderPath "@;/abc"; 
+}
+
+// This is the Naiad Tools Maya menu
+global proc pi_BifrostToolsMenu(string $load_path)
+{
+	// print("load_path = " + $load_path + "\n");
+	menu -tearOff 1 -l "BifrostTools" -p "MayaWindow" "BifrostTools";
+	menuItem -l "Create BifrostSurfaceShape" -c "pi_CreateBifrostSurfaceShape";
+	string $commandStr = "pi_SetProceduralPath(\"" + $load_path + "/../../renderman/procedural/\")";
+	menuItem -l "Set RenderMan Procedural Path" -c $commandStr;
+	string $commandStr = "pi_SetShaderPath(\"" + $load_path + "/../../renderman/shaders/\")";
+	menuItem -l "Set RenderMan Shader Path" -c $commandStr;
+	menuItem -l "Submit Bug Reports" -c "showHelp -absolute \"http://www.proceduralinsight.com/contact.html\";";
+}
+
+global proc RiBBox(float $min_x,
+				   float $min_y,
+				   float $min_z,
+				   float $max_x,
+				   float $max_y,
+				   float $max_z)
+{
+	string $commandString = "    PointsPolygons";
+	$commandString += " [4 4 4 4 4 4]";
+	// $commandString += "[0 3 2 1 4 5 6 7 0 1 5 4 2 3 7 6 1 2 6 5 0 4 7 3] "; // Right-hand coordinate system
+	$commandString += "[1 2 3 0 7 6 5 4 4 5 1 0 6 7 3 2 5 6 2 1 3 7 4 0] "; // Left-handed coordinate system (RenderMan)
+	$commandString += "\"P\" [";
+
+	$commandString += " " + string($min_x) + " " + string($min_y) + " " + string($min_z) + " ";
+	$commandString += " " + string($min_x) + " " + string($min_y) + " " + string($max_z) + " ";
+	$commandString += " " + string($max_x) + " " + string($min_y) + " " + string($max_z) + " ";
+	$commandString += " " + string($max_x) + " " + string($min_y) + " " + string($min_z) + " ";
+
+	$commandString += " " + string($min_x) + " " + string($max_y) + " " + string($min_z) + " ";
+	$commandString += " " + string($min_x) + " " + string($max_y) + " " + string($max_z) + " ";
+	$commandString += " " + string($max_x) + " " + string($max_y) + " " + string($max_z) + " ";
+	$commandString += " " + string($max_x) + " " + string($max_y) + " " + string($min_z) + " ";
+
+	$commandString += "]\n";
+
+	RiArchiveRecord -m "verbatim" -t $commandString;
+
+}
