@@ -2,6 +2,7 @@
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <iostream>
+#include <strstream>
 #include <stdexcept>
 #include <OpenEXR/ImathBox.h>
 
@@ -49,6 +50,31 @@ inline std::istream & operator>>(std::istream & str, BBOX & bbox) {
   if (str >> bbox_type)
     bbox = static_cast<BBOX>(bbox_type);
   return str;
+}
+
+/*!
+ * \brief Output to a string stream makes it easier to
+ *        accommodate both use case of file and console
+ */
+void bounds_as_wavefront_strstream(const Imath::Box3f& bounds,
+                                   std::ostream& os)
+{
+    os << "# Procedural Insight Pty. Ltd. 2015" << std::endl;
+    os << "# www.proceduralinsight.com" << std::endl;
+    os << boost::format("v %1% %2% %3%") % bounds.min.x % bounds.min.y % bounds.min.z << std::endl;
+    os << boost::format("v %1% %2% %3%") % bounds.min.x % bounds.min.y % bounds.max.z << std::endl;
+    os << boost::format("v %1% %2% %3%") % bounds.max.x % bounds.min.y % bounds.max.z << std::endl;
+    os << boost::format("v %1% %2% %3%") % bounds.max.x % bounds.min.y % bounds.min.z << std::endl;
+    os << boost::format("v %1% %2% %3%") % bounds.min.x % bounds.max.y % bounds.min.z << std::endl;
+    os << boost::format("v %1% %2% %3%") % bounds.min.x % bounds.max.y % bounds.max.z << std::endl;
+    os << boost::format("v %1% %2% %3%") % bounds.max.x % bounds.max.y % bounds.max.z << std::endl;
+    os << boost::format("v %1% %2% %3%") % bounds.max.x % bounds.max.y % bounds.min.z << std::endl;
+    os << "f 1 2 6 5" << std::endl;
+    os << "f 4 8 7 3" << std::endl;
+    os << "f 5 6 7 8" << std::endl;
+    os << "f 1 4 3 2" << std::endl;
+    os << "f 7 6 2 3" << std::endl;
+    os << "f 5 8 4 1" << std::endl;
 }
 
 void process_bounds(const std::string& label,const Imath::Box3f& bounds)
@@ -195,6 +221,13 @@ int process_bifrost_file(const std::string& bifrost_filename,
                                 position_channel_name,
                                 bounds);
                         process_bounds("Points only",bounds);
+                        {
+                            std::ostrstream ostream;
+                            bounds_as_wavefront_strstream(bounds, ostream);
+                            ostream << '\0';
+                            std::cout << ostream.str();
+                        }
+
                     break;
                     case BBOX::PointsWithVelocity :
                         bbox_status = determine_points_with_velocity_bbox(component,
