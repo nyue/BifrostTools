@@ -1,3 +1,11 @@
+#include <utils/BifrostUtils.h>
+#include <boost/format.hpp>
+#include <boost/program_options.hpp>
+#include <iostream>
+#include <stdexcept>
+#include <OpenEXR/ImathBox.h>
+
+// Bifrost headers - START
 #include <bifrostapi/bifrost_om.h>
 #include <bifrostapi/bifrost_stateserver.h>
 #include <bifrostapi/bifrost_component.h>
@@ -7,10 +15,7 @@
 #include <bifrostapi/bifrost_stringarray.h>
 #include <bifrostapi/bifrost_refarray.h>
 #include <bifrostapi/bifrost_channel.h>
-#include <boost/format.hpp>
-#include <boost/program_options.hpp>
-#include <iostream>
-#include <stdexcept>
+// Bifrost headers - END
 
 namespace po = boost::program_options;
 
@@ -46,7 +51,37 @@ inline std::istream & operator>>(std::istream & str, BBOX & bbox) {
   return str;
 }
 
-void process_bifrost_file(const std::string& bifrost_filename,
+int determine_points_bbox(const Bifrost::API::Component& component,
+        const std::string& position_channel_name,
+                           Imath::Box3f& bounds)
+{
+    int positionChannelIndex = findChannelIndexViaName(component,position_channel_name.c_str());
+    if (positionChannelIndex<0)
+        return 1;
+    const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
+    return 0;
+}
+
+int determine_points_with_velocity_bbox(const Bifrost::API::Component& component,
+        const std::string& position_channel_name,
+        const std::string& velocity_channel_name,
+                                         float fps,
+                                         Imath::Box3f& bounds)
+{
+    int positionChannelIndex = findChannelIndexViaName(component,position_channel_name.c_str());
+    if (positionChannelIndex<0)
+        return 1;
+    int velocityChannelIndex = findChannelIndexViaName(component,velocity_channel_name.c_str());
+    if (velocityChannelIndex<0)
+        return 1;
+
+    const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
+    const Bifrost::API::Channel& velocity_ch = component.channels()[velocityChannelIndex];
+
+    return 0;
+}
+
+int process_bifrost_file(const std::string& bifrost_filename,
                           const std::string& position_channel_name,
                           const std::string& velocity_channel_name,
                           BBOX bbox_type,
@@ -82,15 +117,45 @@ void process_bifrost_file(const std::string& bifrost_filename,
         Bifrost::API::StateServer ss = fileio.load( );
         if (ss.valid())
         {
+            size_t numComponents = ss.components().count();
+            for (size_t componentIndex=0;componentIndex<numComponents;componentIndex++)
+            {
+                Bifrost::API::Component component = ss.components()[componentIndex];
+                Bifrost::API::TypeID componentType = component.type();
+                if (componentType == Bifrost::API::PointComponentType)
+                {
+                    Imath::Box3f bounds;
+                    int bbox_status;
+                    switch(bbox_type)
+                    {
+                    case BBOX::PointsOnly :
+                        bbox_status = determine_points_bbox(component,
+                                position_channel_name,bounds);
+                    break;
+                    case BBOX::PointsWithVelocity :
+                        bbox_status = determine_points_with_velocity_bbox(component,
+                                position_channel_name,
+                                velocity_channel_name,
+                                *fps,
+                                bounds);
+                    break;
+                    default:
+                        break;
+                    }
 
+
+
+                }
+            }
         }
         else
         {
             std::cerr << boost::format("Unable to load the content of the Bifrost file \"%1%\"") % bifrost_filename.c_str()
                       << std::endl;
-            return;
+            return 1;
         }
     }
+            return 0;
 }
 
 int main(int argc, char **argv)

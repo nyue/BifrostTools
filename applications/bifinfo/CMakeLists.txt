@@ -7,5 +7,6 @@ TARGET_LINK_LIBRARIES ( bifinfo
   bifrostapi
   Base
   ${Boost_LIBRARIES}
+  utils
   )
 
