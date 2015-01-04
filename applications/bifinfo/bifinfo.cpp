@@ -51,14 +51,44 @@ inline std::istream & operator>>(std::istream & str, BBOX & bbox) {
   return str;
 }
 
+void process_bounds(const std::string& label,const Imath::Box3f& bounds)
+{
+    std::cout << label << std::endl;
+    std::cout << "\t" << bounds.min << ":" << bounds.max << std::endl;
+}
+
 int determine_points_bbox(const Bifrost::API::Component& component,
-        const std::string& position_channel_name,
-                           Imath::Box3f& bounds)
+                          const std::string& position_channel_name,
+                          Imath::Box3f& bounds)
 {
     int positionChannelIndex = findChannelIndexViaName(component,position_channel_name.c_str());
     if (positionChannelIndex<0)
         return 1;
     const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
+    if (!position_ch.valid())
+        return 1;
+    if ( position_ch.dataType() != Bifrost::API::FloatV3Type)
+        return 1;
+
+    Bifrost::API::Layout layout = component.layout();
+    size_t depthCount = layout.depthCount();
+    for ( size_t d=0; d<depthCount; d++ ) {
+        for ( size_t t=0; t<layout.tileCount(d); t++ ) {
+            Bifrost::API::TreeIndex tindex(t,d);
+            if ( !position_ch.elementCount( tindex ) ) {
+                // nothing there
+                continue;
+            }
+
+            const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
+            // const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
+            for (size_t i=0; i<position_tile_data.count(); i++ ) {
+                bounds.extendBy(Imath::V3f(position_tile_data[i][0],
+                        position_tile_data[i][1],
+                        position_tile_data[i][2]));
+            }
+        }
+    }
     return 0;
 }
 
@@ -74,9 +104,41 @@ int determine_points_with_velocity_bbox(const Bifrost::API::Component& component
     int velocityChannelIndex = findChannelIndexViaName(component,velocity_channel_name.c_str());
     if (velocityChannelIndex<0)
         return 1;
-
     const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
+    if (!position_ch.valid())
+        return 1;
     const Bifrost::API::Channel& velocity_ch = component.channels()[velocityChannelIndex];
+    if (!velocity_ch.valid())
+        return 1;
+    if ( position_ch.dataType() != Bifrost::API::FloatV3Type)
+        return 1;
+    if ( velocity_ch.dataType() != Bifrost::API::FloatV3Type)
+        return 1;
+
+    Bifrost::API::Layout layout = component.layout();
+    size_t depthCount = layout.depthCount();
+    float fps_1 = 1.0/fps;
+    for ( size_t d=0; d<depthCount; d++ ) {
+        for ( size_t t=0; t<layout.tileCount(d); t++ ) {
+            Bifrost::API::TreeIndex tindex(t,d);
+            if ( !position_ch.elementCount( tindex ) ) {
+                // nothing there
+                continue;
+            }
+            if (position_ch.elementCount( tindex ) != velocity_ch.elementCount( tindex ))
+                return 1;
+            const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
+            const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
+            for (size_t i=0; i<position_tile_data.count(); i++ ) {
+                bounds.extendBy(Imath::V3f(position_tile_data[i][0],
+                        position_tile_data[i][1],
+                        position_tile_data[i][2]));
+                bounds.extendBy(Imath::V3f(position_tile_data[i][0] + (fps_1 * velocity_tile_data[i][0]),
+                        position_tile_data[i][1] + (fps_1 * velocity_tile_data[i][1]),
+                        position_tile_data[i][2] + (fps_1 * velocity_tile_data[i][2])));
+            }
+        }
+    }
 
     return 0;
 }
@@ -130,7 +192,9 @@ int process_bifrost_file(const std::string& bifrost_filename,
                     {
                     case BBOX::PointsOnly :
                         bbox_status = determine_points_bbox(component,
-                                position_channel_name,bounds);
+                                position_channel_name,
+                                bounds);
+                        process_bounds("Points only",bounds);
                     break;
                     case BBOX::PointsWithVelocity :
                         bbox_status = determine_points_with_velocity_bbox(component,
@@ -138,6 +202,7 @@ int process_bifrost_file(const std::string& bifrost_filename,
                                 velocity_channel_name,
                                 *fps,
                                 bounds);
+                        process_bounds("Points with velocity",bounds);
                     break;
                     default:
                         break;
