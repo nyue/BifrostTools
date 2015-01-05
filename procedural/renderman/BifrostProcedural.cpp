@@ -24,9 +24,9 @@ struct BifrostProceduralParameters
 {
     BifrostProceduralParameters()
     : fps(24.0f)
-    , enableVelocityMotionBlur(false)
-    , velocityScale(1.0f)
-    , pointRadius(1.f)
+    , enableVelocityMotionBlur(true)
+    , velocityScale(100.0f)
+    , pointRadius(10.f)
     {}
     virtual ~BifrostProceduralParameters() {}
     std::string bifrost_filename;
@@ -114,7 +114,11 @@ bool process_bifrost(const BifrostProceduralParameters& bifrost_params, RtFloat 
                                     if (bifrost_params.enableVelocityMotionBlur)
                                     {
                                         // RiPoints ( RtInt npoints, ...parameterlist...);
+                                        RtFloat mbTime[2] = {0.0f,1.0f};
+                                        RiMotionBeginV(2,mbTime);
                                         RiPoints(P.size(),RI_P,&(P[0]),RI_CONSTANTWIDTH,&(bifrost_params.pointRadius),RI_NULL);
+                                        RiPoints(PP.size(),RI_P,&(PP[0]),RI_CONSTANTWIDTH,&(bifrost_params.pointRadius),RI_NULL);
+                                        RiMotionEnd();
 //                                        AtArray *vlistArray = 0;
 //                                        vlistArray = AiArrayAllocate(P.size(),2,AI_TYPE_POINT);
 //
@@ -124,7 +128,8 @@ bool process_bifrost(const BifrostProceduralParameters& bifrost_params, RtFloat 
                                     }
                                     else
                                     {
-                                        RiPoints(P.size(),RI_P,&(P[0]),RI_CONSTANTWIDTH,&(bifrost_params.pointRadius),RI_NULL);
+                                        RtFloat width = 2.0f * bifrost_params.pointRadius;
+                                        RiPoints(P.size(),RI_P,&(P[0]),RI_CONSTANTWIDTH,&(width),RI_NULL);
 //                                        AiNodeSetArray(points, "points",
 //                                                       AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
                                     }
