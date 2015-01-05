@@ -26,7 +26,7 @@ struct BifrostProceduralParameters
     : fps(24.0f)
     , enableVelocityMotionBlur(true)
     , velocityScale(100.0f)
-    , pointRadius(10.f)
+    , pointRadius(20.f)
     {}
     virtual ~BifrostProceduralParameters() {}
     std::string bifrost_filename;
@@ -113,30 +113,28 @@ bool process_bifrost(const BifrostProceduralParameters& bifrost_params, RtFloat 
                                     }
                                     if (bifrost_params.enableVelocityMotionBlur)
                                     {
-                                        // RiPoints ( RtInt npoints, ...parameterlist...);
-                                        RtFloat mbTime[2] = {0.0f,1.0f};
+                                        // args->pointMode
+                                        RtString point_type("disk");
+                                        RtFloat mbTime[2] = {-0.2f,0.2f};
                                         RiMotionBeginV(2,mbTime);
-                                        RiPoints(P.size(),RI_P,&(P[0]),RI_CONSTANTWIDTH,&(bifrost_params.pointRadius),RI_NULL);
-                                        RiPoints(PP.size(),RI_P,&(PP[0]),RI_CONSTANTWIDTH,&(bifrost_params.pointRadius),RI_NULL);
+                                        RtFloat width = 2.0f * bifrost_params.pointRadius;
+                                        RiPoints(P.size(),RI_P,&(P[0]),RI_CONSTANTWIDTH,&width,
+                                                "uniform string type",&point_type,
+                                                RI_NULL);
+                                        RiPoints(PP.size(),RI_P,&(PP[0]),RI_CONSTANTWIDTH,&width,
+                                                "uniform string type",&point_type,
+                                                RI_NULL);
                                         RiMotionEnd();
-//                                        AtArray *vlistArray = 0;
-//                                        vlistArray = AiArrayAllocate(P.size(),2,AI_TYPE_POINT);
-//
-//                                        AiArraySetKey(vlistArray, 0, &(P[0]));
-//                                        AiArraySetKey(vlistArray, 1, &(PP[0]));
-//                                        AiNodeSetArray(points, "points",vlistArray);
                                     }
                                     else
                                     {
+                                        // args->pointMode
                                         RtFloat width = 2.0f * bifrost_params.pointRadius;
-                                        RiPoints(P.size(),RI_P,&(P[0]),RI_CONSTANTWIDTH,&(width),RI_NULL);
-//                                        AiNodeSetArray(points, "points",
-//                                                       AiArrayConvert(P.size(),1,AI_TYPE_POINT,&(P[0])));
+                                        RtString point_type("blobby");
+                                        RiPoints(P.size(),RI_P,&(P[0]),RI_CONSTANTWIDTH,&(width),
+                                                // "uniform string type",&point_type,
+                                                RI_NULL);
                                     }
-//                                    AiNodeSetArray(points, "radius",
-//                                                   AiArrayConvert(radius.size(),1,AI_TYPE_FLOAT,&(radius[0])));
-//                                    AiNodeSetInt(points,"mode",args->pointMode);
-                                        
                                 }
                             }
                             else
