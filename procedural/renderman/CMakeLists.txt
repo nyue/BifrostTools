@@ -21,6 +21,7 @@ TARGET_LINK_LIBRARIES ( bifrost_renderman
   bifrostapi
   Base
   ${RENDERMAN_RIBCLIENT_LIBRARY}
+  utils
   )
 
 SET_TARGET_PROPERTIES ( bifrost_renderman
