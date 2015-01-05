@@ -80,7 +80,20 @@ void bounds_as_wavefront_strstream(const Imath::Box3f& bounds,
 void process_bounds(const std::string& label,const Imath::Box3f& bounds)
 {
     std::cout << label << std::endl;
-    std::cout << "\t" << bounds.min << ":" << bounds.max << std::endl;
+    std::cout << "\t min [" << bounds.min << "] max[" << bounds.max << "]"<< std::endl;
+}
+
+void process_bounds_as_renderman(const std::string& label,const Imath::Box3f& bounds)
+{
+    std::cout << label << std::endl;
+    std::cout << boost::format("\t RiBound [ %1% %2% %3% %4% %5% %6%]")
+    % bounds.min.x
+    % bounds.max.x
+    % bounds.min.y
+    % bounds.max.y
+    % bounds.min.z
+    % bounds.max.z
+    << std::endl;
 }
 
 int determine_points_bbox(const Bifrost::API::Component& component,
@@ -221,6 +234,7 @@ int process_bifrost_file(const std::string& bifrost_filename,
                                 position_channel_name,
                                 bounds);
                         process_bounds("Points only",bounds);
+                        process_bounds_as_renderman("Points only",bounds);
                         {
                             std::ostrstream ostream;
                             bounds_as_wavefront_strstream(bounds, ostream);
@@ -236,6 +250,7 @@ int process_bifrost_file(const std::string& bifrost_filename,
                                 *fps,
                                 bounds);
                         process_bounds("Points with velocity",bounds);
+                        process_bounds_as_renderman("Points with velocity",bounds);
                     break;
                     default:
                         break;

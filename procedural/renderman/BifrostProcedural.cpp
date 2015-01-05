@@ -25,8 +25,8 @@ struct BifrostProceduralParameters
     BifrostProceduralParameters()
     : fps(24.0f)
     , enableVelocityMotionBlur(true)
-    , velocityScale(100.0f)
-    , pointRadius(20.f)
+    , velocityScale(1.0f)
+    , pointRadius(1.f)
     {}
     virtual ~BifrostProceduralParameters() {}
     std::string bifrost_filename;
