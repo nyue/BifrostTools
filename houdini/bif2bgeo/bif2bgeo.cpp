@@ -113,52 +113,85 @@ int process_bifrost_file(const std::string& bifrost_filename,
     return 0;
 }
 
+#ifdef HOUDINI_CODE
+#include <GU/GU_Detail.h>
+#include <iostream>
+
+int
+main(int argc, char *argv[])
+{
+    GU_Detail       gdp;
+    UT_BoundingBox  bounds;
+    double scale = 10.0;
+	
+    // Evaluate the iso-surface inside this bounding box                                                                                                                                                         
+    bounds.setBounds(-scale, -scale, -scale, scale, scale, scale);
+
+    // Add velocity attribute
+    GA_RWAttributeRef   v_attrib = gdp.addFloatTuple(GA_ATTRIB_POINT, "v", 3);
+    if (v_attrib.isValid())
+    	v_attrib.getAttribute()->setTypeInfo(GA_TYPE_VECTOR);
+    else
+    	std::cerr << "v_attrib is NOT valid" << std::endl;
+
+	// Create particle points
+    const int numParticles = 100000;
+    for (size_t i = 0; i<numParticles;i++)
+    {
+        UT_Vector4 v(
+                     (drand48()-0.5)*scale,
+                     (drand48()-0.5)*scale,
+                     (drand48()-0.5)*scale
+                     );
+        GEO_Point *ppt = gdp.appendPointElement();
+        ppt->setPos(v);
+        ppt->setValue<UT_Vector3>(v_attrib,UT_Vector3(0,1,0));
+    }
+
+    // Save to sphere.bgeo                                                                                                                                                                                       
+    gdp.save("points.bgeo", NULL);
+	
+    return 0;
+}
+#endif // HOUDINI_CODE
+
 int main(int argc, char **argv)
 {
 
     try {
-        typedef std::vector<std::string> StringContainer;
         std::string position_channel_name("position");
         std::string velocity_channel_name("velocity");
         std::string bifrost_filename;
+        std::string bgeo_filename;
         po::options_description desc("Allowed options");
         desc.add_options()
-            ("version", "print version string")
-            ("help", "produce help message")
-            ("input-file", po::value<std::vector<std::string> >(),
-             "input files")
-            ;
-
-        po::positional_options_description p;
-        p.add("input-file", -1);
+        		("version", "print version string")
+				("help", "produce help message")
+				("input-file,i", po::value<std::string >(&bifrost_filename),
+						"Bifrost file")
+				("output-file,o", po::value<std::string >(&bgeo_filename),
+						"Houdini BGEO file");
 
         po::variables_map vm;
-        po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
+        po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
+
 
         if (vm.count("help")) {
             std::cout << desc << "\n";
             return 1;
         }
-        if (vm.count("input-file"))
+        if (bifrost_filename.size()>4 && bgeo_filename.size()>4)
         {
-            ///< \todo move the string array iterator template to util so we can use it everywhere
-            // std::cout << "Input files are: "
-            // << vm["input-file"].as< std::vector<std::string> >() << "\n";
-            if (vm["input-file"].as< std::vector<std::string> >().size() == 1)
-            {
-                bifrost_filename = vm["input-file"].as< std::vector<std::string> >()[0];
-            }
-            else
-            {
-                std::cout << desc << "\n";
-                return 1;
-            }
-        }
-        if (bifrost_filename.size()>0)
+        	// Do conversion
+            GU_Detail       gdp;
+
             process_bifrost_file(bifrost_filename,
                                  position_channel_name,
                                  velocity_channel_name);
+
+            gdp.save(bgeo_filename.c_str(),NULL);
+        }
         else
         {
             std::cout << desc << "\n";
