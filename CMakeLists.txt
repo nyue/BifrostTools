@@ -38,6 +38,15 @@ IF (APPLE)
     ${BIFROST_BASE_DIR}/Maya.app/Contents/MacOS 
     )		     
 ELSE (APPLE)	     
+  SET ( CMAKE_INSTALL_RPATH
+    ${BIFROST_BASE_DIR}/plug-ins/bifrost/lib
+    ${BIFROST_BASE_DIR}/lib
+    )
+  IF (BUILD_HOUDINI_TOOLS)
+    SET ( CMAKE_INSTALL_RPATH
+      $ENV{HDSO}
+      )
+  ENDIF ()
   LINK_DIRECTORIES (
     ${BIFROST_BASE_DIR}/plug-ins/bifrost/lib
     )

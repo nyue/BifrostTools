@@ -9,3 +9,9 @@ TARGET_LINK_LIBRARIES ( bif2bgeo
   ${Boost_LIBRARIES}
   utils
   )
+
+INSTALL ( TARGETS
+  bif2bgeo
+  DESTINATION
+  bin
+  )

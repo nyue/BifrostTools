@@ -26,7 +26,8 @@ namespace po = boost::program_options;
 
 int process_points(const Bifrost::API::Component& component,
                    const std::string& position_channel_name,
-                   const std::string& velocity_channel_name)
+                   const std::string& velocity_channel_name,
+				   GU_Detail&       gdp)
 {
     int positionChannelIndex = findChannelIndexViaName(component,position_channel_name.c_str());
     if (positionChannelIndex<0)
@@ -61,17 +62,28 @@ int process_points(const Bifrost::API::Component& component,
                 return 1;
             const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
             const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
+            bool process_velocities = position_tile_data.count() == velocity_tile_data.count();
+            GA_RWAttributeRef   v_attrib;
+            if (process_velocities)
+            {
+            	v_attrib = gdp.addFloatTuple(GA_ATTRIB_POINT, "v", 3);
+            	if (v_attrib.isValid())
+            		v_attrib.getAttribute()->setTypeInfo(GA_TYPE_VECTOR);
+            	else
+            		std::cerr << "v_attrib is NOT valid" << std::endl;
+            }
+
             for (size_t i=0; i<position_tile_data.count(); i++ )
             {
-                // position_tile_data[i][0]
-                // position_tile_data[i][1]
-                // position_tile_data[i][2]
-            }
-            for (size_t i=0; i<velocity_tile_data.count(); i++ )
-            {
-                // velocity_tile_data[i][0]
-                //     velocity_tile_data[i][1]
-                //     velocity_tile_data[i][2]
+                UT_Vector4 point_position(position_tile_data[i][0],
+                			 position_tile_data[i][1],
+							 position_tile_data[i][2]);
+                GEO_Point *ppt = gdp.appendPointElement();
+                ppt->setPos(point_position);
+                if (process_velocities)
+                	ppt->setValue<UT_Vector3>(v_attrib,UT_Vector3(velocity_tile_data[i][0],
+                			velocity_tile_data[i][1],
+							velocity_tile_data[i][2]));
             }
         }
     }
@@ -81,7 +93,8 @@ int process_points(const Bifrost::API::Component& component,
 
 int process_bifrost_file(const std::string& bifrost_filename,
                          const std::string& position_channel_name,
-                         const std::string& velocity_channel_name)
+                         const std::string& velocity_channel_name,
+						 GU_Detail&       gdp)
 {
     Bifrost::API::String biffile = bifrost_filename.c_str();
     Bifrost::API::ObjectModel om;
@@ -99,7 +112,11 @@ int process_bifrost_file(const std::string& bifrost_filename,
             Bifrost::API::TypeID componentType = component.type();
             if (componentType == Bifrost::API::PointComponentType)
             {
-                process_points(component,position_channel_name,velocity_channel_name);
+                process_points(component,position_channel_name,velocity_channel_name,gdp);
+            }
+            else if (componentType == Bifrost::API::VoxelComponentType)
+            {
+                // process_voxels(component,gdp);
             }
         }
     }
@@ -188,7 +205,8 @@ int main(int argc, char **argv)
 
             process_bifrost_file(bifrost_filename,
                                  position_channel_name,
-                                 velocity_channel_name);
+                                 velocity_channel_name,
+								 gdp);
 
             gdp.save(bgeo_filename.c_str(),NULL);
         }
