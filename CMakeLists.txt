@@ -4,7 +4,12 @@ PROJECT ( BifrostTools )
 FIND_PACKAGE ( Maya REQUIRED  )
 FIND_PACKAGE ( Boost REQUIRED COMPONENTS program_options )
 FIND_PACKAGE ( S2AA REQUIRED  )
-FIND_PACKAGE ( ILMBase REQUIRED )
+IF ( BUILD_HOUDINI_TOOLS )
+  FIND_PACKAGE ( HDK REQUIRED )
+  INCLUDE_DIRECTORIES ( ${HDK_INCLUDE_DIR} )
+ELSE ()
+  FIND_PACKAGE ( ILMBase REQUIRED )
+ENDIF ()
 IF (WIN32)
    FIND_PACKAGE ( ZLIB REQUIRED )
    INCLUDE_DIRECTORIES ( ${ZLIB_INCLUDE_DIR} )
@@ -47,6 +52,7 @@ INCLUDE_DIRECTORIES (
   )
 
 ADD_SUBDIRECTORY ( utils )
+ADD_SUBDIRECTORY ( applications )
 # Houdini requirement are stringent and often at odds
 # with other DCC application, as such, we can't build
 # them together.
@@ -56,7 +62,6 @@ IF ( BUILD_HOUDINI_TOOLS )
 ELSE ( BUILD_HOUDINI_TOOLS )
   ADD_SUBDIRECTORY ( maya )
   ADD_SUBDIRECTORY ( procedural )
-  ADD_SUBDIRECTORY ( applications )
 ENDIF ( BUILD_HOUDINI_TOOLS )
 
 INCLUDE ( CPack )
