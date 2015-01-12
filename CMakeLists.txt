@@ -1,6 +1,12 @@
 CMAKE_MINIMUM_REQUIRED ( VERSION 2.8 )
 PROJECT ( BifrostTools )
 
+IF (APPLE)
+  IF (BUILD_HOUDINI_TOOLS)
+    MESSAGE ( FATAL_ERROR "Due to use of Clang in building Houdini, it is not compatible with Maya 2016/Bifrost" )
+  ENDIF ()
+ENDIF ()
+
 FIND_PACKAGE ( Maya REQUIRED  )
 FIND_PACKAGE ( Boost REQUIRED COMPONENTS program_options )
 FIND_PACKAGE ( S2AA REQUIRED  )
