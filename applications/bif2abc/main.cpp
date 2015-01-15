@@ -37,18 +37,36 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
     return os;
 }
 
-int process_point_component(const Bifrost::API::Component& component,
+Alembic::AbcGeom::OXform
+addXform(Alembic::Abc::OObject parent, std::string name)
+{
+    Alembic::AbcGeom::OXform xform(parent, name.c_str());
+
+    return xform;
+}
+
+bool process_point_component(const Bifrost::API::Component& component,
                             const std::string& position_channel_name,
-                            Imath::Box3f& bounds)
+                            Imath::Box3f& bounds,
+                            uint32_t tsidx,
+                            Alembic::AbcGeom::OXform& xform)
 {
     int positionChannelIndex = findChannelIndexViaName(component,position_channel_name.c_str());
     if (positionChannelIndex<0)
-        return 1;
+        return false;
     const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
     if (!position_ch.valid())
-        return 1;
+        return false;
     if ( position_ch.dataType() != Bifrost::API::FloatV3Type)
-        return 1;
+        return false;
+
+    // Create the OPoints object
+    Alembic::AbcGeom::OPoints partsOut(xform,component.name().c_str(),tsidx);
+    Alembic::AbcGeom::OPointsSchema &pSchema = partsOut.getSchema();
+
+
+
+
 
     Bifrost::API::Layout layout = component.layout();
     size_t depthCount = layout.depthCount();
@@ -69,7 +87,7 @@ int process_point_component(const Bifrost::API::Component& component,
             }
         }
     }
-    return 0;
+    return true;
 }
 
 bool process_bifrost_file(const std::string& bifrost_filename,
@@ -108,14 +126,38 @@ bool process_bifrost_file(const std::string& bifrost_filename,
     if (ss.valid())
     {
         size_t numComponents = ss.components().count();
-        for (size_t componentIndex=0;componentIndex<numComponents;componentIndex++)
+        if (numComponents>0)
         {
-            Bifrost::API::Component component = ss.components()[componentIndex];
-            Bifrost::API::TypeID componentType = component.type();
-            if (componentType == Bifrost::API::PointComponentType)
+            /*
+             * Create the Alembic file only if we get a valid state server
+             * after loading and there is at least one component
+             */
+
+            Alembic::AbcGeom::OArchive archive(
+                                               Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(),
+                                                                                   alembic_filename.c_str(),
+                                                                                   std::string("Procedural Insight Pty. Ltd."),
+                                                                                   std::string("info@proceduralinsight.com"))
+                                               );
+            Alembic::AbcGeom::OObject topObj( archive, Alembic::AbcGeom::kTop );
+            Alembic::AbcGeom::OXform xform = addXform(topObj,"bif2abc");
+
+            // Create the time sampling
+            Alembic::Abc::chrono_t fps = 24.0;
+            Alembic::Abc::chrono_t startTime = 0.0;
+            Alembic::Abc::chrono_t iFps = 1.0/fps;
+            Alembic::Abc::TimeSampling ts(iFps,startTime);
+            uint32_t tsidx = topObj.getArchive().addTimeSampling(ts);
+
+            for (size_t componentIndex=0;componentIndex<numComponents;componentIndex++)
             {
-                Imath::Box3f bounds;
-                process_point_component(component, position_channel_name,bounds);
+                Bifrost::API::Component component = ss.components()[componentIndex];
+                Bifrost::API::TypeID componentType = component.type();
+                if (componentType == Bifrost::API::PointComponentType)
+                {
+                    Imath::Box3f bounds;
+                    process_point_component(component, position_channel_name,bounds,tsidx,xform);
+                }
             }
         }
     }

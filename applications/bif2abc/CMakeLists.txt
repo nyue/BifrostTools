@@ -17,6 +17,7 @@ ADD_EXECUTABLE ( bif2abc
 TARGET_LINK_LIBRARIES ( bif2abc
 
   ${Ilmbase_HALF_LIBRARY}
+  ${Ilmbase_IEX_LIBRARY}
 
   ${Alembic_AbcGeom_LIBRARY}
   ${Alembic_Abc_LIBRARY}
