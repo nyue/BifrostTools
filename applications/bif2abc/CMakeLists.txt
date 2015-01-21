@@ -6,14 +6,15 @@ IF (USE_MAYA_ALEMBIC)
     FIND_PACKAGE ( MayaAlembic
       REQUIRED
       COMPONENTS
-      Abc AbcGeom Ogawa
+      Abc
+ AbcGeom
+ Ogawa
       
       AbcCollection
       AbcCoreAbstract
       AbcCoreFactory
       AbcCoreHDF5
       AbcCoreOgawa
-      # AbcMaterial
       
       Half
       Iex
@@ -28,7 +29,25 @@ IF (USE_MAYA_ALEMBIC)
   # ${MayaAlembic_LIBRARIES}
   # ${Bifrost_HDF5_LIBRARIES}
   
-  SET ( BIF2ABC_ALEMBIC_LIBRARIES )
+  SET ( BIF2ABC_ALEMBIC_LIBRARIES
+      ${MayaAlembic_Abc_LIBRARY}
+ ${MayaAlembic_AbcGeom_LIBRARY}
+ ${MayaAlembic_Ogawa_LIBRARY}
+      
+      ${MayaAlembic_AbcCollection_LIBRARY}
+      ${MayaAlembic_AbcCoreAbstract_LIBRARY}
+      ${MayaAlembic_AbcCoreFactory_LIBRARY}
+      ${MayaAlembic_AbcCoreHDF5_LIBRARY}
+      ${MayaAlembic_AbcCoreOgawa_LIBRARY}
+      
+      ${MayaAlembic_Half_LIBRARY}
+      ${MayaAlembic_Iex_LIBRARY}
+      ${MayaAlembic_Imath_LIBRARY}
+      ${MayaAlembic_Util_LIBRARY}
+      ${MayaAlembic_hdf5_LIBRARY}
+      ${MayaAlembic_hdf5_hl_LIBRARY}
+${ZLIB_LIBRARY}
+ )
 
 ELSE (USE_MAYA_ALEMBIC)
 
