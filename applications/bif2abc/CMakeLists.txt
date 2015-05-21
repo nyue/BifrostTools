@@ -1,5 +1,5 @@
 IF (USE_MAYA_ALEMBIC)
-
+  
   IF ( APPLE )
     MESSAGE ( FATAL_ERROR "Maya's Alembic libraries are not usuable on OS X Yosemite due to -stdlib=libstdc++" )
   ELSE ( APPLE )
@@ -7,8 +7,8 @@ IF (USE_MAYA_ALEMBIC)
       REQUIRED
       COMPONENTS
       Abc
- AbcGeom
- Ogawa
+	  AbcGeom
+	  Ogawa
       
       AbcCollection
       AbcCoreAbstract
@@ -30,24 +30,24 @@ IF (USE_MAYA_ALEMBIC)
   # ${Bifrost_HDF5_LIBRARIES}
   
   SET ( BIF2ABC_ALEMBIC_LIBRARIES
-      ${MayaAlembic_Abc_LIBRARY}
- ${MayaAlembic_AbcGeom_LIBRARY}
- ${MayaAlembic_Ogawa_LIBRARY}
-      
-      ${MayaAlembic_AbcCollection_LIBRARY}
-      ${MayaAlembic_AbcCoreAbstract_LIBRARY}
-      ${MayaAlembic_AbcCoreFactory_LIBRARY}
-      ${MayaAlembic_AbcCoreHDF5_LIBRARY}
-      ${MayaAlembic_AbcCoreOgawa_LIBRARY}
-      
-      ${MayaAlembic_Half_LIBRARY}
-      ${MayaAlembic_Iex_LIBRARY}
-      ${MayaAlembic_Imath_LIBRARY}
-      ${MayaAlembic_Util_LIBRARY}
-      ${MayaAlembic_hdf5_LIBRARY}
-      ${MayaAlembic_hdf5_hl_LIBRARY}
-${ZLIB_LIBRARY}
- )
+    ${MayaAlembic_Abc_LIBRARY}
+	${MayaAlembic_AbcGeom_LIBRARY}
+	${MayaAlembic_Ogawa_LIBRARY}
+    
+    ${MayaAlembic_AbcCollection_LIBRARY}
+    ${MayaAlembic_AbcCoreAbstract_LIBRARY}
+    ${MayaAlembic_AbcCoreFactory_LIBRARY}
+    ${MayaAlembic_AbcCoreHDF5_LIBRARY}
+    ${MayaAlembic_AbcCoreOgawa_LIBRARY}
+    
+    ${MayaAlembic_Half_LIBRARY}
+    ${MayaAlembic_Iex_LIBRARY}
+    ${MayaAlembic_Imath_LIBRARY}
+    ${MayaAlembic_Util_LIBRARY}
+    ${MayaAlembic_hdf5_LIBRARY}
+    ${MayaAlembic_hdf5_hl_LIBRARY}
+	${ZLIB_LIBRARY}
+	)
 
 ELSE (USE_MAYA_ALEMBIC)
 
@@ -82,8 +82,24 @@ ELSE (USE_MAYA_ALEMBIC)
     ${HDF5_hdf5_hl_LIBRARY}
     )
 
+  SET ( BIF2ABC_ALEMBIC_LIBRARIES
+    ${Alembic_AbcGeom_LIBRARY}
+    ${Alembic_AbcCoreFactory_LIBRARY}
+    ${Alembic_Abc_LIBRARY}
+    ${Alembic_AbcCoreOgawa_LIBRARY}
+    ${Alembic_Ogawa_LIBRARY}
+    ${Alembic_AbcCoreHDF5_LIBRARY}
+    ${Alembic_AbcCoreAbstract_LIBRARY}
+    ${Alembic_Util_LIBRARY}
+    ${Ilmbase_HALF_LIBRARY}
+    ${Ilmbase_IEX_LIBRARY}
+    ${HDF5_hdf5_LIBRARY}
+    ${HDF5_hdf5_hl_LIBRARY}
+    )
+
 ENDIF (USE_MAYA_ALEMBIC)
 
+MESSAGE ( "BIF2ABC_ALEMBIC_LIBRARIES = ${BIF2ABC_ALEMBIC_LIBRARIES}" )
 
 ADD_EXECUTABLE ( bif2abc
   main.cpp
