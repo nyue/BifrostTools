@@ -59,6 +59,7 @@ inline std::istream & operator>>(std::istream & str, BBOX & bbox) {
 void bounds_as_wavefront_strstream(const Imath::Box3f& bounds,
                                    std::ostream& os)
 {
+
     os << "# Procedural Insight Pty. Ltd. 2015" << std::endl;
     os << "# www.proceduralinsight.com" << std::endl;
     os << boost::format("v %1% %2% %3%") % bounds.min.x % bounds.min.y % bounds.min.z << std::endl;
@@ -75,6 +76,7 @@ void bounds_as_wavefront_strstream(const Imath::Box3f& bounds,
     os << "f 1 4 3 2" << std::endl;
     os << "f 7 6 2 3" << std::endl;
     os << "f 5 8 4 1" << std::endl;
+
 }
 
 void process_bounds(const std::string& label,const Imath::Box3f& bounds)
@@ -197,7 +199,7 @@ int process_bifrost_file(const std::string& bifrost_filename,
     std::cout << boost::format("Frame          : %1%") % info.frame << std::endl;
     std::cout << boost::format("Channel count  : %1%") % info.channelCount << std::endl;
     std::cout << boost::format("Component name : %1%") % info.componentName.c_str() << std::endl;
-    std::cout << boost::format("Component type : %1%") % info.componentType << std::endl;
+    std::cout << boost::format("Component type : %1%") % info.componentType.c_str() << std::endl;
     std::cout << boost::format("Object name    : %1%") % info.objectName.c_str() << std::endl;
     std::cout << boost::format("Layout name    : %1%") % info.layoutName.c_str() << std::endl;
 
