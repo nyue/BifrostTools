@@ -56,41 +56,13 @@ ELSE (USE_MAYA_ALEMBIC)
     # to ensure version consistency
     FIND_PACKAGE ( HDF5 REQUIRED COMPONENTS C HL)
   ENDIF ()
-  FIND_PACKAGE ( Alembic
-    REQUIRED
-    COMPONENTS
-    AbcGeom Abc Ogawa
-    AbcCoreHDF5 AbcCoreAbstract AbcCoreFactory AbcCoreOgawa
-    Util
-    ) # Order of components is CRITICAL    
+  FIND_PACKAGE ( Alembic REQUIRED )
   MESSAGE ( "MAYA_LOCATION = ${MAYA_LOCATION}")
-  # INCLUDE_DIRECTORIES ( ${MAYA_LOCATION}/devkit/Alembic/include )
+  INCLUDE_DIRECTORIES ( ${ALEMBIC_INCLUDE_DIR} )
   # LINK_DIRECTORIES ( ${MAYA_LOCATION}/devkit/Alembic/lib )
 
   SET ( BIF2ABC_ALEMBIC_LIBRARIES
-    ${Alembic_AbcCoreAbstract_LIBRARY}
-    ${Alembic_AbcCoreFactory_LIBRARY}
-    ${Alembic_AbcCoreHDF5_LIBRARY}
-    ${Alembic_AbcCoreOgawa_LIBRARY}
-    ${Alembic_AbcGeom_LIBRARY}
-    ${Alembic_Abc_LIBRARY}
-    ${Alembic_Ogawa_LIBRARY}
-    ${Alembic_Util_LIBRARY}
-    ${Ilmbase_HALF_LIBRARY}
-    ${Ilmbase_IEX_LIBRARY}
-    ${HDF5_hdf5_LIBRARY}
-    ${HDF5_hdf5_hl_LIBRARY}
-    )
-
-  SET ( BIF2ABC_ALEMBIC_LIBRARIES
-    ${Alembic_AbcGeom_LIBRARY}
-    ${Alembic_AbcCoreFactory_LIBRARY}
-    ${Alembic_Abc_LIBRARY}
-    ${Alembic_AbcCoreOgawa_LIBRARY}
-    ${Alembic_Ogawa_LIBRARY}
-    ${Alembic_AbcCoreHDF5_LIBRARY}
-    ${Alembic_AbcCoreAbstract_LIBRARY}
-    ${Alembic_Util_LIBRARY}
+    ${Alembic_Alembic_LIBRARY}
     ${Ilmbase_HALF_LIBRARY}
     ${Ilmbase_IEX_LIBRARY}
     ${HDF5_hdf5_LIBRARY}
