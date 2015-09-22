@@ -2,8 +2,6 @@
 # a version of 3DelightForMaya is available
 # for the same version of Maya as used in
 # the parent directory
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT ( BifrostRenderManTools )
 FIND_PACKAGE ( Maya REQUIRED )
 FIND_PACKAGE ( OpenGL REQUIRED )
 FIND_PACKAGE ( Delight REQUIRED )
@@ -22,8 +20,6 @@ ADD_LIBRARY ( BifrostTools SHARED
   )
 
 TARGET_LINK_LIBRARIES ( BifrostTools
-  ${DELIGHT_3delight_LIBRARY}
-  ${DELIGHTFORMAYA_3delightformaya_LIBRARY}
   ${MAYA_Foundation_LIBRARY}
   ${MAYA_OpenMaya_LIBRARY}
   ${MAYA_OpenMayaUI_LIBRARY}

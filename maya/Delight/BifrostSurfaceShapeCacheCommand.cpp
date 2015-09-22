@@ -9,6 +9,7 @@
 #include "BifrostSurfaceShape.h"
 #include <ri.h>
 #include <fstream>
+#include <boost/format.hpp>
 
 MStringArray BifrostSurfaceShapeCacheCommand::m_CachedShapeNames;
 MObject BifrostSurfaceShapeCacheCommand::m_CurrentBifrostSurfaceShape;
@@ -43,8 +44,8 @@ void* BifrostSurfaceShapeCacheCommand::creator()
  * cache_command -addStep -sampleTime <double> <shape>
  *   The command is expected to keep a sample of the specified object at the current
  *   time, which is passed via the -sampleTime flag; the command can assume that
- *   Maya’s current time is already set to this value when it is called. The command
- *   should store a combination of the object’s name, topology, sample time. No
+ *   Maya���s current time is already set to this value when it is called. The command
+ *   should store a combination of the object���s name, topology, sample time. No
  *   return value is expected.
  * cache_command -list
  *   Return the names of the shapes that have been cached by this command in a
@@ -258,24 +259,6 @@ MStatus BifrostSurfaceShapeCacheCommand::parseSyntax (MArgDatabase &argData)
 				empVelocityBlurValue?1:0,
 				empChunkValue);
 
-#ifdef USE_RIBCLIENT
-		/*
-		RiAttributeBegin();
-		RiArchiveRecord(RI_COMMENT,"BifrostSurfaceShapeCacheCommand emit command begins");
-		RtString data[2] = {"BifrostProcedural",dsoArgs};
-		RtBound bound = {-RI_INFINITY,RI_INFINITY,
-						 -RI_INFINITY,RI_INFINITY,
-						 -RI_INFINITY,RI_INFINITY};
-		RtString procedural_data[2] = {"emp_runproc",dsoArgs};
-		RtString program_data[2] = {"emp_runproc",dsoArgs};
-		bool RIUseRunProgram = false;
-		if (RIUseRunProgram)
-			RiProcedural(program_data,bound,RiProcRunProgram,(RtProcFreeFunc)RI_NULL);
-		else
-			RiProcedural(procedural_data,bound,RiProcDynamicLoad,(RtProcFreeFunc)RI_NULL);
-		RiAttributeEnd();
-		*/
-#else
 		CMS(status = MGlobal::executeCommand( "RiAttributeBegin;"));
 		bool hasGeometry = pBifrostSS->hasGeometryData();
 		if (hasGeometry)
@@ -379,7 +362,7 @@ MStatus BifrostSurfaceShapeCacheCommand::parseSyntax (MArgDatabase &argData)
 			}
 		}
 		CMS(status = MGlobal::executeCommand( "RiAttributeEnd;"));
-#endif // USE_RIBCLIENT
+
 		MGlobal::displayInfo(MString("BifrostSurfaceShapeCacheCommand : Emit RiAttributeEnd"));
 		
 		if (pBifrostSS) {
