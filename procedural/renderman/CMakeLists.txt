@@ -17,9 +17,7 @@ ADD_LIBRARY ( bifrost_renderman SHARED
 
 TARGET_LINK_LIBRARIES ( bifrost_renderman
   ${Boost_LIBRARIES}
-  bifrostcore
-  bifrostapi
-  Base
+  ${Bifrost_SDK_LIBRARIES}
   ${RENDERMAN_RIBCLIENT_LIBRARY}
   utils
   )

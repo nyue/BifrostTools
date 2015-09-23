@@ -3,9 +3,7 @@ ADD_EXECUTABLE ( bifdump
   )
 
 TARGET_LINK_LIBRARIES ( bifdump
-  bifrostcore
-  bifrostapi
-  Base
+  ${Bifrost_SDK_LIBRARIES}
   )
 
 INSTALL ( TARGETS

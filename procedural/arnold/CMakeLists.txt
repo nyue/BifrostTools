@@ -11,9 +11,7 @@ ADD_LIBRARY ( bifrost_arnold SHARED ProcMain.cpp ProcArgs.cpp )
 TARGET_LINK_LIBRARIES ( bifrost_arnold
   ${Arnold_ai_LIBRARY}
   ${Boost_LIBRARIES}
-  bifrostcore
-  bifrostapi
-  Base
+  ${Bifrost_SDK_LIBRARIES}
   utils
   )
 

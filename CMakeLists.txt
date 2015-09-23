@@ -8,6 +8,7 @@ IF (APPLE)
 ENDIF ()
 
 FIND_PACKAGE ( Maya REQUIRED  )
+FIND_PACKAGE ( Bifrost REQUIRED  ) # Bifrost is currently a part of Maya but is slated to be independent
 FIND_PACKAGE ( Boost 1.47 REQUIRED COMPONENTS program_options )
 FIND_PACKAGE ( S2AA REQUIRED  )
 FIND_PACKAGE ( OpenGL REQUIRED )
@@ -29,6 +30,7 @@ INCLUDE_DIRECTORIES ( ${S2AA_INCLUDE_DIR} )
 INCLUDE_DIRECTORIES ( ${ILMBASE_INCLUDE_DIRS} )
 INCLUDE_DIRECTORIES ( ${GLEW_INCLUDE_DIR} )
 INCLUDE_DIRECTORIES ( ${GLFW3_INCLUDE_DIR} )
+INCLUDE_DIRECTORIES ( ${BIFROST_INCLUDE_DIR} )
 
 IF ( WIN32 )
    ADD_DEFINITIONS ( /D_CRT_SECURE_NO_WARNINGS )
@@ -36,7 +38,8 @@ ELSE ()
    ADD_DEFINITIONS ( -std=c++0x )
 ENDIF ()
 
-SET ( BIFROST_BASE_DIR ${MAYA_LOCATION} )
+# Deprecated (we are using Bifrost CMake macros)
+# SET ( BIFROST_BASE_DIR ${MAYA_LOCATION} )
 
 LINK_DIRECTORIES ( ${MAYA_LIBRARY_DIR} )
 MESSAGE ( "MAYA_LIBRARY_DIR = ${MAYA_LIBRARY_DIR}")
@@ -60,13 +63,7 @@ ELSE (APPLE)
     )
 ENDIF ()
 
-INCLUDE_DIRECTORIES (
-  .
-  ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/common
-  ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostcore/api
-  ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/bifrostapi/api
-  ${BIFROST_BASE_DIR}/plug-ins/bifrost/include/modules/aminomath/api
-  )
+INCLUDE_DIRECTORIES ( . )
 
 ADD_SUBDIRECTORY ( utils )
 ADD_SUBDIRECTORY ( applications )

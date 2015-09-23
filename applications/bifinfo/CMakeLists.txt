@@ -3,9 +3,7 @@ ADD_EXECUTABLE ( bifinfo
   )
 
 TARGET_LINK_LIBRARIES ( bifinfo
-  bifrostcore
-  bifrostapi
-  Base
+  ${Bifrost_SDK_LIBRARIES}
   ${Boost_LIBRARIES}
   utils
   )

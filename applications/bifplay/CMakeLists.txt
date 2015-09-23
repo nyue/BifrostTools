@@ -32,9 +32,7 @@ ADD_EXECUTABLE ( bifplay
   )
 
 TARGET_LINK_LIBRARIES ( bifplay
-  bifrostcore
-  bifrostapi
-  Base
+  ${Bifrost_SDK_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${Boost_LIBRARIES}
   ${GLEW_GLEW_LIBRARY}

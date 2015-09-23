@@ -23,9 +23,7 @@ ADD_EXECUTABLE ( bif2prt
 # zlib
 
 TARGET_LINK_LIBRARIES ( bif2prt
-  bifrostcore
-  bifrostapi
-  Base
+  ${Bifrost_SDK_LIBRARIES}
   ${ZLIB_LIBRARY}
   )
 

@@ -77,8 +77,6 @@ ADD_EXECUTABLE ( bif2abc
 TARGET_LINK_LIBRARIES ( bif2abc
   ${BIF2ABC_ALEMBIC_LIBRARIES}
   ${Boost_LIBRARIES}
-  bifrostcore
-  bifrostapi
-  Base
+  ${Bifrost_SDK_LIBRARIES}
   utils
   )
