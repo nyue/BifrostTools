@@ -10,3 +10,8 @@ TARGET_LINK_LIBRARIES ( bifinfo
   utils
   )
 
+INSTALL ( TARGETS
+  bifinfo
+  DESTINATION
+  bin
+  )

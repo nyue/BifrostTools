@@ -244,7 +244,7 @@ int main(int argc, char **argv)
 {
 	if (argc!=2)
 	{
-		std::cerr << boost::format("Usage : %1% <bgeo-file>") % argv[0] << std::endl;
+		std::cerr << boost::format("Usage : %1% <bifrost-file>") % argv[0] << std::endl;
         exit(EXIT_FAILURE);
 	}
 	std::string bgeo_file(argv[1]);
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
 //    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 //#endif // defined(__APPLE__) || defined (_WIN32)
 
-    std::string windows_title = (boost::format("HouGeo Viewer")).str();
+    std::string windows_title = (boost::format("Bifrost Viewer")).str();
     g_window = glfwCreateWindow(640, 480, windows_title.c_str(), NULL, NULL);
     if (!g_window)
     {

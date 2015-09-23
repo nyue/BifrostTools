@@ -7,3 +7,9 @@ TARGET_LINK_LIBRARIES ( bifdump
   bifrostapi
   Base
   )
+
+INSTALL ( TARGETS
+  bifdump
+  DESTINATION
+  bin
+  )
