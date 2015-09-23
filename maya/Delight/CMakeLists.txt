@@ -3,7 +3,6 @@
 # for the same version of Maya as used in
 # the parent directory
 FIND_PACKAGE ( Maya REQUIRED )
-FIND_PACKAGE ( OpenGL REQUIRED )
 FIND_PACKAGE ( Delight REQUIRED )
 
 ADD_DEFINITIONS ( ${MAYA_DEFINITIONS} )
