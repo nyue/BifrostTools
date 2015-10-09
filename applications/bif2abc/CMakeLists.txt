@@ -80,3 +80,9 @@ TARGET_LINK_LIBRARIES ( bif2abc
   ${Bifrost_SDK_LIBRARIES}
   utils
   )
+
+INSTALL ( TARGETS
+  bif2abc
+  DESTINATION
+  bin
+  )

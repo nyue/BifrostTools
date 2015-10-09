@@ -42,12 +42,12 @@ ENDIF ()
 # Deprecated (we are using Bifrost CMake macros)
 # SET ( BIFROST_BASE_DIR ${MAYA_LOCATION} )
 
-LINK_DIRECTORIES ( ${MAYA_LIBRARY_DIR} )
+# LINK_DIRECTORIES ( ${MAYA_LIBRARY_DIR} )
 MESSAGE ( "MAYA_LIBRARY_DIR = ${MAYA_LIBRARY_DIR}")
 IF (APPLE)
   LINK_DIRECTORIES (
-    ${BIFROST_BASE_DIR}/plug-ins/bifrost/bin
-    ${BIFROST_BASE_DIR}/Maya.app/Contents/MacOS 
+    ${MAYA_LOCATION}/../plug-ins/bifrost/bin
+    ${MAYA_LOCATION}/../Maya.app/Contents/MacOS 
     )		     
 ELSE (APPLE)	     
   SET ( CMAKE_INSTALL_RPATH
