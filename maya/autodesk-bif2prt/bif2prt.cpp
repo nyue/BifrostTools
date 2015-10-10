@@ -1,14 +1,7 @@
 #include "bif2prt.h"
 #include <algorithm>
 
-#include <bifrostapi/bifrost_om.h>
-#include <bifrostapi/bifrost_stateserver.h>
-#include <bifrostapi/bifrost_component.h>
-#include <bifrostapi/bifrost_fileio.h>
-#include <bifrostapi/bifrost_fileutils.h>
-#include <bifrostapi/bifrost_string.h>
-#include <bifrostapi/bifrost_stringarray.h>
-#include <bifrostapi/bifrost_refarray.h>
+#include <BifrostHeaders.h>
 
 namespace {
 void usage(char **argv)

@@ -1,11 +1,12 @@
 #ifndef BIF2PRT
 #define BIF2PRT
 
-#include <bifrostapi/bifrost_component.h>
-#include <bifrostapi/bifrost_channel.h>
-#include <bifrostapi/bifrost_tiledata.h>
-#include <bifrostapi/bifrost_types.h>
-#include <bifrostapi/bifrost_layout.h>
+// #include <bifrostapi/bifrost_component.h>
+// #include <bifrostapi/bifrost_channel.h>
+// #include <bifrostapi/bifrost_tiledata.h>
+// #include <bifrostapi/bifrost_types.h>
+// #include <bifrostapi/bifrost_layout.h>
+#include <BifrostHeaders.h>
 #include <iostream>
 #include <fstream>
 #include <vector>

@@ -33,6 +33,10 @@ INCLUDE_DIRECTORIES ( ${GLEW_INCLUDE_DIR} )
 INCLUDE_DIRECTORIES ( ${GLFW3_INCLUDE_DIR} )
 INCLUDE_DIRECTORIES ( ${BIFROST_INCLUDE_DIR} )
 
+# Temporary whilst Bifrost SDK is in a flux
+# For the single point of header include of Bifrost headers
+INCLUDE_DIRECTORIES ( . )
+
 IF ( WIN32 )
    ADD_DEFINITIONS ( /D_CRT_SECURE_NO_WARNINGS )
 ELSE ()
@@ -50,17 +54,15 @@ IF (APPLE)
     ${MAYA_LOCATION}/../Maya.app/Contents/MacOS 
     )		     
 ELSE (APPLE)	     
-  SET ( CMAKE_INSTALL_RPATH
-    ${BIFROST_BASE_DIR}/plug-ins/bifrost/lib
-    ${BIFROST_BASE_DIR}/lib
-    )
+  SET ( CMAKE_INSTALL_RPATH "${MAYA_LOCATION}/plug-ins/bifrost/lib:${MAYA_LOCATION}/lib" )
   IF (BUILD_HOUDINI_TOOLS)
     SET ( CMAKE_INSTALL_RPATH
       $ENV{HDSO}
       )
   ENDIF ()
   LINK_DIRECTORIES (
-    ${BIFROST_BASE_DIR}/plug-ins/bifrost/lib
+    ${MAYA_LOCATION}/plug-ins/bifrost/lib
+	${MAYA_LOCATION}/lib
     )
 ENDIF ()
 
