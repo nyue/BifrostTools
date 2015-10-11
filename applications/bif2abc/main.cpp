@@ -38,6 +38,9 @@ addXform(Alembic::Abc::OObject parent, std::string name)
 bool process_liquid_point_component(const Bifrost::API::Component& component,
 									const std::string& position_channel_name,
 									const std::string& velocity_channel_name,
+									const std::string& density_channel_name,
+									const std::string& vorticity_channel_name,
+									const std::string& droplet_channel_name,
 									Imath::Box3f& bounds,
 									uint32_t tsidx,
 									Alembic::AbcGeom::OXform& xform)
@@ -129,7 +132,10 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
 bool process_bifrost_file(const std::string& bifrost_filename,
                           const std::string& alembic_filename,
                           const std::string& position_channel_name,
-                          const std::string& velocity_channel_name)
+                          const std::string& velocity_channel_name,
+						  const std::string& density_channel_name,
+						  const std::string& vorticity_channel_name,
+						  const std::string& droplet_channel_name)
 {
 
     Bifrost::API::String biffile = bifrost_filename.c_str();
@@ -175,7 +181,13 @@ bool process_bifrost_file(const std::string& bifrost_filename,
                 if (componentType == Bifrost::API::PointComponentType)
                 {
                     Imath::Box3f bounds;
-                    process_liquid_point_component(component, position_channel_name,velocity_channel_name,bounds,tsidx,xform);
+                    process_liquid_point_component(component,
+                    							   position_channel_name,
+												   velocity_channel_name,
+												   density_channel_name,
+												   vorticity_channel_name,
+												   droplet_channel_name,
+												   bounds,tsidx,xform);
                 }
             }
         }
@@ -235,7 +247,10 @@ int main(int argc, char **argv)
         process_bifrost_file(bifrost_filename,
                              alembic_filename,
                              position_channel_name,
-                             velocity_channel_name);
+                             velocity_channel_name,
+							 density_channel_name,
+							 vorticity_channel_name,
+							 droplet_channel_name);
     }
     catch(std::exception& e) {
         std::cerr << "error: " << e.what() << "\n";
