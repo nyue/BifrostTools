@@ -36,11 +36,11 @@ addXform(Alembic::Abc::OObject parent, std::string name)
 }
 
 bool process_liquid_point_component(const Bifrost::API::Component& component,
-                            const std::string& position_channel_name,
-                            const std::string& velocity_channel_name,
-                            Imath::Box3f& bounds,
-                            uint32_t tsidx,
-                            Alembic::AbcGeom::OXform& xform)
+									const std::string& position_channel_name,
+									const std::string& velocity_channel_name,
+									Imath::Box3f& bounds,
+									uint32_t tsidx,
+									Alembic::AbcGeom::OXform& xform)
 {
     // Position channel
     int positionChannelIndex = findChannelIndexViaName(component,position_channel_name.c_str());
@@ -99,8 +99,8 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
             for (size_t i=0; i<position_tile_data.count(); i++ )
             {
                 Imath::V3f point_position(position_tile_data[i][0],
-                        position_tile_data[i][1],
-                        position_tile_data[i][2]);
+										  position_tile_data[i][1],
+										  position_tile_data[i][2]);
                 positions.push_back(point_position);
                 bounds.extendBy(point_position);
                 ids.push_back(currentId);
@@ -110,8 +110,8 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
             for (size_t i=0; i<velocity_tile_data.count(); i++ )
             {
                 velocities.push_back(Imath::V3f (velocity_tile_data[i][0],
-                        velocity_tile_data[i][1],
-                        velocity_tile_data[i][2]));
+												 velocity_tile_data[i][1],
+												 velocity_tile_data[i][2]));
             }
         }
     }
@@ -120,7 +120,7 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
     Alembic::AbcGeom::V3fArraySample position_data ( positions );
     Alembic::AbcGeom::UInt64ArraySample id_data ( ids );
     Alembic::AbcGeom::OPointsSchema::Sample psamp(position_data,
-                id_data);
+												  id_data);
     pSchema.set( psamp );
     velOut.set( Alembic::AbcGeom::V3fArraySample( velocities ) );
     return true;
@@ -154,12 +154,10 @@ bool process_bifrost_file(const std::string& bifrost_filename,
              * after loading and there is at least one component
              */
 
-            Alembic::AbcGeom::OArchive archive(
-                                               Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(),
+            Alembic::AbcGeom::OArchive archive(Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(),
                                                                                    alembic_filename.c_str(),
                                                                                    std::string("Procedural Insight Pty. Ltd."),
-                                                                                   std::string("info@proceduralinsight.com"))
-                                               );
+                                                                                   std::string("info@proceduralinsight.com")));
             Alembic::AbcGeom::OObject topObj( archive, Alembic::AbcGeom::kTop );
             Alembic::AbcGeom::OXform xform = addXform(topObj,"bif2abc");
 
