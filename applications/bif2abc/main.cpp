@@ -35,7 +35,7 @@ addXform(Alembic::Abc::OObject parent, std::string name)
     return xform;
 }
 
-bool process_point_component(const Bifrost::API::Component& component,
+bool process_liquid_point_component(const Bifrost::API::Component& component,
                             const std::string& position_channel_name,
                             const std::string& velocity_channel_name,
                             Imath::Box3f& bounds,
@@ -136,26 +136,11 @@ bool process_bifrost_file(const std::string& bifrost_filename,
     Bifrost::API::ObjectModel om;
     Bifrost::API::FileIO fileio = om.createFileIO( biffile );
     const Bifrost::API::BIF::FileInfo& info = fileio.info();
+    bool is_bifrost_foam_file(false);
 
-//     std::cout << boost::format("Version        : %1%") % info.version << std::endl;
-//     std::cout << boost::format("Frame          : %1%") % info.frame << std::endl;
-//     std::cout << boost::format("Channel count  : %1%") % info.channelCount << std::endl;
-//     std::cout << boost::format("Component name : %1%") % info.componentName.c_str() << std::endl;
-//     std::cout << boost::format("Component type : %1%") % info.componentType << std::endl;
-//     std::cout << boost::format("Object name    : %1%") % info.objectName.c_str() << std::endl;
-//     std::cout << boost::format("Layout name    : %1%") % info.layoutName.c_str() << std::endl;
-
-//     for (size_t channelIndex=0;channelIndex<info.channelCount;channelIndex++)
-//     {
-//         std::cout << std::endl;
-//         const Bifrost::API::BIF::FileInfo::ChannelInfo& channelInfo = fileio.channelInfo(channelIndex);
-//         std::cout << boost::format("        Channel name  : %1%") % channelInfo.name.c_str() << std::endl;
-//         std::cout << boost::format("        Data type     : %1%") % channelInfo.dataType << std::endl;
-//         std::cout << boost::format("        Max depth     : %1%") % channelInfo.maxDepth << std::endl;
-//         std::cout << boost::format("        Tile count    : %1%") % channelInfo.tileCount << std::endl;
-//         std::cout << boost::format("        Element count : %1%") % channelInfo.elementCount << std::endl;
-//     }
-
+    // Need to determine is the BIF file contains Foam or Liquid particle info
+    if (std::string(info.componentName.c_str()).find("Foam")!=std::string::npos)
+    	is_bifrost_foam_file = true;
     
     // Need to load the entire file's content to process
     Bifrost::API::StateServer ss = fileio.load( );
@@ -192,7 +177,7 @@ bool process_bifrost_file(const std::string& bifrost_filename,
                 if (componentType == Bifrost::API::PointComponentType)
                 {
                     Imath::Box3f bounds;
-                    process_point_component(component, position_channel_name,velocity_channel_name,bounds,tsidx,xform);
+                    process_liquid_point_component(component, position_channel_name,velocity_channel_name,bounds,tsidx,xform);
                 }
             }
         }
@@ -210,8 +195,11 @@ int main(int argc, char **argv)
 {
 
     try {
+        std::string density_channel_name("density");
         std::string position_channel_name("position");
         std::string velocity_channel_name("velocity");
+        std::string vorticity_channel_name("vorticity");
+        std::string droplet_channel_name("droplet");
         std::string bifrost_filename;
         std::string alembic_filename;
         float fps = 24.0f;
@@ -220,14 +208,25 @@ int main(int argc, char **argv)
             ("help", "Produce help message")
             ("fps", po::value<float>(&fps),
              "Frames per second to scale velocity when determining the velocity-attenuated bounding box. Defaults to 24.0")
-            ("input-file,i", po::value<std::string>(&bifrost_filename),
-             "Bifrost file")
-            ("output-file,o", po::value<std::string>(&alembic_filename),
-             "Alembic file")
+            ("density", po::value<std::string>(&density_channel_name)->default_value(density_channel_name),
+             (boost::format("Density channel name. Defaults to '%1%'") % density_channel_name).str().c_str())
+			("position", po::value<std::string>(&position_channel_name)->default_value(position_channel_name),
+		     (boost::format("Position channel name. Defaults to '%1%'") % position_channel_name).str().c_str())
+			("velocity", po::value<std::string>(&velocity_channel_name)->default_value(velocity_channel_name),
+		     (boost::format("Velocity channel name. Defaults to '%1%'") % velocity_channel_name).str().c_str())
+			("vorticity", po::value<std::string>(&vorticity_channel_name)->default_value(vorticity_channel_name),
+		     (boost::format("Vorticity channel name. Defaults to '%1%'") % vorticity_channel_name).str().c_str())
+			("droplet", po::value<std::string>(&droplet_channel_name)->default_value(droplet_channel_name),
+		     (boost::format("Droplet channel name. Defaults to '%1%'") % droplet_channel_name).str().c_str())
+            ("bif", po::value<std::string>(&bifrost_filename),
+             "Bifrost file. [Required]")
+            ("abc", po::value<std::string>(&alembic_filename),
+             "Alembic file. [Required]")
             ;
 
         po::variables_map vm;
         po::store(po::parse_command_line(argc, argv, desc), vm);
+
         po::notify(vm);
 
         if (vm.count("help") || bifrost_filename.empty() || alembic_filename.empty()) {
