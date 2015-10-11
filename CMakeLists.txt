@@ -53,6 +53,8 @@ IF (APPLE)
     ${MAYA_LOCATION}/../plug-ins/bifrost/bin
     ${MAYA_LOCATION}/../Maya.app/Contents/MacOS 
     )		     
+  SET ( CMAKE_INSTALL_RPATH "${MAYA_LOCATION}/../plug-ins/bifrost/bin:${MAYA_LOCATION}/../Maya.app/Contents/MacOS" )
+  SET ( CMAKE_MACOSX_RPATH "${MAYA_LOCATION}/../plug-ins/bifrost/bin:${MAYA_LOCATION}/../Maya.app/Contents/MacOS" )
 ELSE (APPLE)	     
   SET ( CMAKE_INSTALL_RPATH "${MAYA_LOCATION}/plug-ins/bifrost/lib:${MAYA_LOCATION}/lib" )
   IF (BUILD_HOUDINI_TOOLS)
