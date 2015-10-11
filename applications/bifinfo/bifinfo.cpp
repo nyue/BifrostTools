@@ -23,23 +23,23 @@ enum BBOX { None, PointsOnly, PointsWithVelocity };
 inline std::ostream& operator<<(std::ostream & os, BBOX & bbox)
 {
     switch (bbox) {
-     case None:
-         os << "None";
-         break;
-     case PointsOnly:
-         os << "Points only";
-         break;
-     case PointsWithVelocity:
-         os << "Points with velocity";
-     }
-     return os;
+    case None:
+        os << "None";
+        break;
+    case PointsOnly:
+        os << "Points only";
+        break;
+    case PointsWithVelocity:
+        os << "Points with velocity";
+    }
+    return os;
 }
 
 inline std::istream & operator>>(std::istream & str, BBOX & bbox) {
-  unsigned int bbox_type = 0;
-  if (str >> bbox_type)
-    bbox = static_cast<BBOX>(bbox_type);
-  return str;
+    unsigned int bbox_type = 0;
+    if (str >> bbox_type)
+        bbox = static_cast<BBOX>(bbox_type);
+    return str;
 }
 
 /*!
@@ -79,13 +79,13 @@ void process_bounds_as_renderman(const std::string& label,const Imath::Box3f& bo
 {
     std::cout << label << std::endl;
     std::cout << boost::format("\t RiBound [ %1% %2% %3% %4% %5% %6%]")
-    % bounds.min.x
-    % bounds.max.x
-    % bounds.min.y
-    % bounds.max.y
-    % bounds.min.z
-    % bounds.max.z
-    << std::endl;
+        % bounds.min.x
+        % bounds.max.x
+        % bounds.min.y
+        % bounds.max.y
+        % bounds.min.z
+        % bounds.max.z
+              << std::endl;
 }
 
 int determine_points_bbox(const Bifrost::API::Component& component,
@@ -115,8 +115,8 @@ int determine_points_bbox(const Bifrost::API::Component& component,
             // const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
             for (size_t i=0; i<position_tile_data.count(); i++ ) {
                 bounds.extendBy(Imath::V3f(position_tile_data[i][0],
-                        position_tile_data[i][1],
-                        position_tile_data[i][2]));
+                                           position_tile_data[i][1],
+                                           position_tile_data[i][2]));
             }
         }
     }
@@ -124,10 +124,10 @@ int determine_points_bbox(const Bifrost::API::Component& component,
 }
 
 int determine_points_with_velocity_bbox(const Bifrost::API::Component& component,
-        const std::string& position_channel_name,
-        const std::string& velocity_channel_name,
-                                         float fps,
-                                         Imath::Box3f& bounds)
+                                        const std::string& position_channel_name,
+                                        const std::string& velocity_channel_name,
+                                        float fps,
+                                        Imath::Box3f& bounds)
 {
     int positionChannelIndex = findChannelIndexViaName(component,position_channel_name.c_str());
     if (positionChannelIndex<0)
@@ -162,11 +162,11 @@ int determine_points_with_velocity_bbox(const Bifrost::API::Component& component
             const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
             for (size_t i=0; i<position_tile_data.count(); i++ ) {
                 bounds.extendBy(Imath::V3f(position_tile_data[i][0],
-                        position_tile_data[i][1],
-                        position_tile_data[i][2]));
+                                           position_tile_data[i][1],
+                                           position_tile_data[i][2]));
                 bounds.extendBy(Imath::V3f(position_tile_data[i][0] + (fps_1 * velocity_tile_data[i][0]),
-                        position_tile_data[i][1] + (fps_1 * velocity_tile_data[i][1]),
-                        position_tile_data[i][2] + (fps_1 * velocity_tile_data[i][2])));
+                                           position_tile_data[i][1] + (fps_1 * velocity_tile_data[i][1]),
+                                           position_tile_data[i][2] + (fps_1 * velocity_tile_data[i][2])));
             }
         }
     }
@@ -175,10 +175,10 @@ int determine_points_with_velocity_bbox(const Bifrost::API::Component& component
 }
 
 int process_bifrost_file(const std::string& bifrost_filename,
-                          const std::string& position_channel_name,
-                          const std::string& velocity_channel_name,
-                          BBOX bbox_type,
-                          const float* fps=0)
+                         const std::string& position_channel_name,
+                         const std::string& velocity_channel_name,
+                         BBOX bbox_type,
+                         const float* fps=0)
 {
     Bifrost::API::String biffile = bifrost_filename.c_str();
     Bifrost::API::ObjectModel om;
@@ -223,8 +223,8 @@ int process_bifrost_file(const std::string& bifrost_filename,
                     {
                     case BBOX::PointsOnly :
                         bbox_status = determine_points_bbox(component,
-                                position_channel_name,
-                                bounds);
+                                                            position_channel_name,
+                                                            bounds);
                         process_bounds("Points only",bounds);
                         process_bounds_as_renderman("Points only",bounds);
                         {
@@ -234,16 +234,16 @@ int process_bifrost_file(const std::string& bifrost_filename,
                             std::cout << ostream.str();
                         }
 
-                    break;
+                        break;
                     case BBOX::PointsWithVelocity :
                         bbox_status = determine_points_with_velocity_bbox(component,
-                                position_channel_name,
-                                velocity_channel_name,
-                                *fps,
-                                bounds);
+                                                                          position_channel_name,
+                                                                          velocity_channel_name,
+                                                                          *fps,
+                                                                          bounds);
                         process_bounds("Points with velocity",bounds);
                         process_bounds_as_renderman("Points with velocity",bounds);
-                    break;
+                        break;
                     default:
                         break;
                     }
@@ -260,7 +260,7 @@ int process_bifrost_file(const std::string& bifrost_filename,
             return 1;
         }
     }
-            return 0;
+    return 0;
 }
 
 int main(int argc, char **argv)
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
             ("help", "produce help message")
             ("bbox", po::value<BBOX>(&bbox_type), "Analyze the entire file to obtain the overall bounding box [0:None, 1:PointsOnly, 2:PointsWithVelocity]")
             ("fps", po::value<float>(&fps),
-                    "Frames per second to scale velocity when determining the velocity-attenuated bounding box. Defaults to 24.0")
+             "Frames per second to scale velocity when determining the velocity-attenuated bounding box. Defaults to 24.0")
             ("input-file", po::value<std::vector<std::string> >(),
              "input files")
             ;
