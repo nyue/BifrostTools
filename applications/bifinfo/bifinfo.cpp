@@ -211,6 +211,7 @@ int process_bifrost_file(const std::string& bifrost_filename,
         if (ss.valid())
         {
             size_t numComponents = ss.components().count();
+            std::cout << boost::format("StateServer components count : %1%") % numComponents << std::endl;
             for (size_t componentIndex=0;componentIndex<numComponents;componentIndex++)
             {
                 Bifrost::API::Component component = ss.components()[componentIndex];
