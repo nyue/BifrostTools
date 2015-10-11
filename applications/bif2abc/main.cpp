@@ -35,6 +35,75 @@ addXform(Alembic::Abc::OObject parent, std::string name)
     return xform;
 }
 
+CANNOT BUILD NEED TO CONSIDER THROWING EXCEPTION
+
+/*
+http://stackoverflow.com/questions/2639255/c-return-a-null-object-if-search-result-not-found
+
+boost::optional<Attr&> getAttribute(const string& attribute_name) const
+{
+   //search collection
+   //if found at i
+        return attributes[i];
+   //if not found
+        return boost::optional<Attr&>();
+}
+ */
+#ifdef OLD_RETRIEVAL
+typedef boost::optional<const Bifrost::API::Channel&> OptionalChannelRef;
+
+OptionalChannelRef
+get_channel(const Bifrost::API::Component& i_component,
+				 const std::string& i_channel_name,
+				 const Bifrost::API::DataType& i_expected_type)
+{
+    int channelIndex = findChannelIndexViaName(i_component,i_channel_name.c_str());
+    if (channelIndex<0)
+    {
+        std::cerr << boost::format("get_channel() : channel '%1%' not found") % i_channel_name << std::endl;
+        return OptionalChannelRef();
+    }
+    const Bifrost::API::Channel& channel = i_component.channels()[channelIndex];
+    if (!channel.valid())
+    {
+        std::cerr << boost::format("get_channel() : channel '%1%' not valid") % i_channel_name << std::endl;
+        return OptionalChannelRef();
+    }
+    if ( channel.dataType() != i_expected_type)
+    {
+        std::cerr << boost::format("get_channel() : channel '%1%' of type %2% is different from expected type %3%") % i_channel_name % channel.dataType() % i_expected_type << std::endl;
+        return OptionalChannelRef();
+    }
+    return channel;
+}
+#else //OLD_RETRIEVAL
+
+const Bifrost::API::Channel *
+get_channel(const Bifrost::API::Component& i_component,
+				 const std::string& i_channel_name,
+				 const Bifrost::API::DataType& i_expected_type)
+{
+    int channelIndex = findChannelIndexViaName(i_component,i_channel_name.c_str());
+    if (channelIndex<0)
+    {
+        std::cerr << boost::format("get_channel() : channel '%1%' not found") % i_channel_name << std::endl;
+        return nullptr;
+    }
+    const Bifrost::API::Channel* channel_ptr = &(i_component.channels()[channelIndex]);
+    if (!channel_ptr->valid())
+    {
+        std::cerr << boost::format("get_channel() : channel '%1%' not valid") % i_channel_name << std::endl;
+        return nullptr;
+    }
+    if ( channel_ptr->dataType() != i_expected_type)
+    {
+        std::cerr << boost::format("get_channel() : channel '%1%' of type %2% is different from expected type %3%") % i_channel_name % channel_ptr->dataType() % i_expected_type << std::endl;
+        return nullptr;
+    }
+    return channel_ptr;
+}
+#endif //OLD_RETRIEVAL
+
 bool process_liquid_point_component(const Bifrost::API::Component& component,
 									const std::string& position_channel_name,
 									const std::string& velocity_channel_name,
@@ -46,6 +115,7 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
 									Alembic::AbcGeom::OXform& xform)
 {
     // Position channel
+#ifdef OLD_CHANNEL_RETRIEVAL
     int positionChannelIndex = findChannelIndexViaName(component,position_channel_name.c_str());
     if (positionChannelIndex<0)
         return false;
@@ -54,7 +124,28 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
         return false;
     if ( position_ch.dataType() != Bifrost::API::FloatV3Type)
         return false;
+#else // OLD_CHANNEL_RETRIEVAL
+    const Bifrost::API::Channel& position_ch_ptr = get_channel(component,position_channel_name,Bifrost::API::FloatV3Type);
+    if (get_channel(component,position_channel_name,Bifrost::API::FloatV3Type))
+    else
+    	return false;
+    if (!position_ch)
+    	return false;
+#endif // OLD_CHANNEL_RETRIEVAL
 
+    if (false)
+    {
+        // Density channel
+        int densityChannelIndex = findChannelIndexViaName(component,density_channel_name.c_str());
+        if (densityChannelIndex<0)
+            return false;
+        const Bifrost::API::Channel& density_ch = component.channels()[densityChannelIndex];
+        if (!density_ch.valid())
+            return false;
+        if ( density_ch.dataType() != Bifrost::API::FloatType)
+            return false;
+
+    }
     // Velocity channel
     int velocityChannelIndex = findChannelIndexViaName(component,velocity_channel_name.c_str());
     if (velocityChannelIndex<0)
