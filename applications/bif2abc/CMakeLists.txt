@@ -72,6 +72,7 @@ MESSAGE ( "BIF2ABC_ALEMBIC_LIBRARIES = ${BIF2ABC_ALEMBIC_LIBRARIES}" )
 
 ADD_EXECUTABLE ( bif2abc
   bif2abc.cpp
+  Bifrost2Alembic.cpp
   )
 
 TARGET_LINK_LIBRARIES ( bif2abc
