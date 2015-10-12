@@ -80,9 +80,11 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
     Alembic::AbcGeom::MetaData mdata;
     SetGeometryScope( mdata, Alembic::AbcGeom::kVaryingScope );
     Alembic::AbcGeom::OV3fArrayProperty velOut( pSchema, ".velocities", mdata, tsidx );
+    Alembic::AbcGeom::OFloatArrayProperty denOut( pSchema, "densities", mdata, tsidx );
 
     std::vector< Alembic::Abc::V3f > positions;
     std::vector< Alembic::Abc::V3f > velocities;
+    std::vector< float > densities;
     std::vector< Alembic::Util::uint64_t > ids;
 
     // NOTE : Other than position, velocity and id, all the other information
@@ -102,11 +104,13 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
 
             const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
             const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
+            const Bifrost::API::TileData<float>& density_tile_data = density_ch.tileData<float>( tindex );
             if (position_tile_data.count() != velocity_tile_data.count())
             {
                 std::cerr << boost::format("Point position and velocity tile data count mismatch position[%1%] velocity[%2%]") % position_tile_data.count() % velocity_tile_data.count()<< std::endl;
                 return false;
             }
+            // Position
             for (size_t i=0; i<position_tile_data.count(); i++ )
             {
                 Imath::V3f point_position(position_tile_data[i][0],
@@ -117,13 +121,19 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
                 ids.push_back(currentId);
                 currentId++;
             }
-
+            // Velocity
             for (size_t i=0; i<velocity_tile_data.count(); i++ )
             {
                 velocities.push_back(Imath::V3f (velocity_tile_data[i][0],
 												 velocity_tile_data[i][1],
 												 velocity_tile_data[i][2]));
             }
+            // Density
+            for (size_t i=0; i<density_tile_data.count(); i++ )
+            {
+            	densities.push_back(density_tile_data[i]);
+            }
+
         }
     }
 
@@ -134,6 +144,7 @@ bool process_liquid_point_component(const Bifrost::API::Component& component,
 												  id_data);
     pSchema.set( psamp );
     velOut.set( Alembic::AbcGeom::V3fArraySample( velocities ) );
+    denOut.set( Alembic::AbcGeom::FloatArraySample( densities ) );
     return true;
 }
 
