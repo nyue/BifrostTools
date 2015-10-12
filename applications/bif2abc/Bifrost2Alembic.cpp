@@ -32,11 +32,11 @@ bool Bifrost2Alembic::translate()
     Bifrost::API::ObjectModel om;
     Bifrost::API::FileIO fileio = om.createFileIO( biffile );
     const Bifrost::API::BIF::FileInfo& info = fileio.info();
-    bool is_bifrost_foam_file(false);
+    bool is_bifrost_liquid_file(true);
 
     // Need to determine is the BIF file contains Foam or Liquid particle info
     if (std::string(info.componentName.c_str()).find("Foam")!=std::string::npos)
-    	is_bifrost_foam_file = true;
+    	is_bifrost_liquid_file = false;
 
     // Need to load the entire file's content to process
     Bifrost::API::StateServer ss = fileio.load( );
@@ -71,13 +71,16 @@ bool Bifrost2Alembic::translate()
                 if (componentType == Bifrost::API::PointComponentType)
                 {
                     Imath::Box3f bounds;
-                    process_liquid_point_component(component,
-                    							   _position_channel_name,
-												   _velocity_channel_name,
-												   _density_channel_name,
-												   _vorticity_channel_name,
-												   _droplet_channel_name,
-												   bounds,tsidx,xform);
+                    process_point_component(is_bifrost_liquid_file,
+                    						component,
+											_position_channel_name,
+											_velocity_channel_name,
+											_density_channel_name,
+											_vorticity_channel_name,
+											_droplet_channel_name,
+											bounds,
+											tsidx,
+											xform);
                 }
             }
         }
@@ -100,19 +103,26 @@ Bifrost2Alembic::addXform(Alembic::Abc::OObject parent, std::string name)
     return xform;
 }
 
-bool Bifrost2Alembic::process_liquid_point_component(const Bifrost::API::Component& component,
-													 const std::string& position_channel_name,
-													 const std::string& velocity_channel_name,
-													 const std::string& density_channel_name,
-													 const std::string& vorticity_channel_name,
-													 const std::string& droplet_channel_name,
-													 Imath::Box3f& bounds,
-													 uint32_t tsidx,
-													 Alembic::AbcGeom::OXform& xform)
+bool Bifrost2Alembic::process_point_component(bool is_bifrost_liquid_file,
+											  const Bifrost::API::Component& component,
+											  const std::string& position_channel_name,
+											  const std::string& velocity_channel_name,
+											  const std::string& density_channel_name,
+											  const std::string& vorticity_channel_name,
+											  const std::string& droplet_channel_name,
+											  Imath::Box3f& bounds,
+											  uint32_t tsidx,
+											  Alembic::AbcGeom::OXform& xform)
 {
+	// All channel variables (not all will be initialized)
+    Bifrost::API::Channel position_ch;  // in both liquid and foam
+    Bifrost::API::Channel velocity_ch;  // in both liquid and foam
+    Bifrost::API::Channel density_ch;   // in both liquid and foam
+    Bifrost::API::Channel vorticity_ch; // only in liquid
+    Bifrost::API::Channel droplet_ch;   // only in liquid
+
     // Position channel
     bool position_channel_status = false;
-    Bifrost::API::Channel position_ch;
     get_channel(component,position_channel_name,Bifrost::API::FloatV3Type,position_ch,position_channel_status);
     if (!position_channel_status)
     {
@@ -121,7 +131,6 @@ bool Bifrost2Alembic::process_liquid_point_component(const Bifrost::API::Compone
 
     // Density channel
     bool density_channel_status = false;
-    Bifrost::API::Channel density_ch;
     get_channel(component,density_channel_name,Bifrost::API::FloatType,density_ch,density_channel_status);
     if (!density_channel_status)
     {
@@ -130,13 +139,36 @@ bool Bifrost2Alembic::process_liquid_point_component(const Bifrost::API::Compone
 
     // Velocity channel
     bool velocity_channel_status = false;
-    Bifrost::API::Channel velocity_ch;
     get_channel(component,velocity_channel_name,Bifrost::API::FloatV3Type,velocity_ch,velocity_channel_status);
     if (!velocity_channel_status)
     {
     	return false;
     }
 
+    /*!
+     * \note Additional attributes requiring handling
+     * \li Vorticity (vector)
+     * \li Droplet (scalar)
+     */
+    if (is_bifrost_liquid_file)
+    {
+        // Vorticity channel
+        bool vorticity_channel_status = false;
+        get_channel(component,vorticity_channel_name,Bifrost::API::FloatType,vorticity_ch,vorticity_channel_status);
+        if (!vorticity_channel_status)
+        {
+        	return false;
+        }
+
+        // Droplet channel
+        bool droplet_channel_status = false;
+        get_channel(component,droplet_channel_name,Bifrost::API::FloatType,droplet_ch,droplet_channel_status);
+        if (!droplet_channel_status)
+        {
+        	return false;
+        }
+
+    }
     // Create the OPoints object
     Alembic::AbcGeom::OPoints partsOut(xform,component.name().c_str(),tsidx);
     Alembic::AbcGeom::OPointsSchema &pSchema = partsOut.getSchema();
@@ -144,11 +176,12 @@ bool Bifrost2Alembic::process_liquid_point_component(const Bifrost::API::Compone
     Alembic::AbcGeom::MetaData mdata;
     SetGeometryScope( mdata, Alembic::AbcGeom::kVaryingScope );
     Alembic::AbcGeom::OV3fArrayProperty velOut( pSchema, ".velocities", mdata, tsidx );
-    // Alembic::AbcGeom::OFloatArrayProperty denOut( pSchema, "densities", mdata, tsidx );
 
     std::vector< Alembic::Abc::V3f > positions;
     std::vector< Alembic::Abc::V3f > velocities;
     std::vector< float > densities;
+    std::vector< float > vorticities;
+    std::vector< float > droplets;
     std::vector< Alembic::Util::uint64_t > ids;
 
     // NOTE : Other than position, velocity and id, all the other information
@@ -158,6 +191,19 @@ bool Bifrost2Alembic::process_liquid_point_component(const Bifrost::API::Compone
 														  "density",
 														  pSchema,
 														  density_geom_param);
+    if (is_bifrost_liquid_file)
+    {
+        AddPointAttributes<Alembic::AbcGeom::OFloatGeomParam>(tsidx,
+        													  _geometry_parameter_scope,
+    														  "vorticity",
+    														  pSchema,
+    														  vorticity_geom_param);
+        AddPointAttributes<Alembic::AbcGeom::OFloatGeomParam>(tsidx,
+        													  _geometry_parameter_scope,
+    														  "droplet",
+    														  pSchema,
+    														  droplet_geom_param);
+    }
     // Data accumulation
     Bifrost::API::Layout layout = component.layout();
     size_t depthCount = layout.depthCount();
@@ -202,6 +248,22 @@ bool Bifrost2Alembic::process_liquid_point_component(const Bifrost::API::Compone
             	densities.push_back(density_tile_data[i]);
             }
 
+            if (is_bifrost_liquid_file)
+            {
+                const Bifrost::API::TileData<float>& vorticity_tile_data = vorticity_ch.tileData<float>( tindex );
+                const Bifrost::API::TileData<float>& droplet_tile_data = droplet_ch.tileData<float>( tindex );
+            	// Vorticity
+                for (size_t i=0; i<vorticity_tile_data.count(); i++ )
+                {
+                	vorticities.push_back(vorticity_tile_data[i]);
+                }
+
+            	// Droplet
+                for (size_t i=0; i<droplet_tile_data.count(); i++ )
+                {
+                	droplets.push_back(droplet_tile_data[i]);
+                }
+            }
         }
     }
 
@@ -212,11 +274,24 @@ bool Bifrost2Alembic::process_liquid_point_component(const Bifrost::API::Compone
 												  id_data);
     pSchema.set( psamp );
     velOut.set( Alembic::AbcGeom::V3fArraySample( velocities ) );
-    // denOut.set( Alembic::AbcGeom::FloatArraySample( densities ) );
+    // Geometry Parameters handling
     SetPointFloatAttributesData<Alembic::AbcGeom::OFloatGeomParam>(densities.data(),
     															   densities.size(),
 																   _geometry_parameter_scope,
 																   density_geom_param);
+    if (is_bifrost_liquid_file)
+    {
+    	// Vorticity
+        SetPointFloatAttributesData<Alembic::AbcGeom::OFloatGeomParam>(vorticities.data(),
+        															   vorticities.size(),
+    																   _geometry_parameter_scope,
+    																   vorticity_geom_param);
+    	// Droplet
+        SetPointFloatAttributesData<Alembic::AbcGeom::OFloatGeomParam>(droplets.data(),
+        															   droplets.size(),
+    																   _geometry_parameter_scope,
+    																   droplet_geom_param);
+    }
 	return true;
 }
 

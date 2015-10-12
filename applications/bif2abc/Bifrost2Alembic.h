@@ -78,15 +78,16 @@ protected:
 	Alembic::AbcGeom::OXform addXform(Alembic::Abc::OObject parent,
 									  std::string name);
 
-	bool process_liquid_point_component(const Bifrost::API::Component& component,
-										const std::string& position_channel_name,
-										const std::string& velocity_channel_name,
-										const std::string& density_channel_name,
-										const std::string& vorticity_channel_name,
-										const std::string& droplet_channel_name,
-										Imath::Box3f& bounds,
-										uint32_t tsidx,
-										Alembic::AbcGeom::OXform& xform);
+	bool process_point_component(bool is_bifrost_liquid_file,
+								 const Bifrost::API::Component& component,
+								 const std::string& position_channel_name,
+								 const std::string& velocity_channel_name,
+								 const std::string& density_channel_name,
+								 const std::string& vorticity_channel_name,
+								 const std::string& droplet_channel_name,
+								 Imath::Box3f& bounds,
+								 uint32_t tsidx,
+								 Alembic::AbcGeom::OXform& xform);
 private:
 	std::string _bifrost_filename;
 	std::string _alembic_filename;
