@@ -50,7 +50,9 @@ bool Bifrost2Alembic::translate()
              * after loading and there is at least one component
              */
 
-            Alembic::AbcGeom::OArchive archive(Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(),
+            Alembic::AbcGeom::OArchive archive(Alembic::Abc::CreateArchiveWithInfo(
+            		// Alembic::AbcCoreHDF5::WriteArchive(),
+            		Alembic::AbcCoreOgawa::WriteArchive(),
                                                                                    _alembic_filename.c_str(),
                                                                                    std::string("Procedural Insight Pty. Ltd."),
                                                                                    std::string("info@proceduralinsight.com")));
