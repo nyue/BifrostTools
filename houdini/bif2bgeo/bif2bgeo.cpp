@@ -1,123 +1,78 @@
-#include <utils/BifrostUtils.h>
-#include <boost/format.hpp>
-#include <boost/program_options.hpp>
 #include <iostream>
-#include <strstream>
-#include <stdexcept>
-#include <OpenEXR/ImathBox.h>
+#include <vector>
+#include <string>
+#include <boost/program_options.hpp>
+#include <boost/format.hpp>
+
+// Houdini header - START
+#include <GU/GU_Detail.h>
+#include <UT/UT_FileUtil.h>
+// Houdini header - END
 
 // Bifrost headers - START
-#include <bifrostapi/bifrost_om.h>
-#include <bifrostapi/bifrost_stateserver.h>
-#include <bifrostapi/bifrost_component.h>
-#include <bifrostapi/bifrost_fileio.h>
-#include <bifrostapi/bifrost_fileutils.h>
-#include <bifrostapi/bifrost_string.h>
-#include <bifrostapi/bifrost_stringarray.h>
-#include <bifrostapi/bifrost_refarray.h>
-#include <bifrostapi/bifrost_channel.h>
+#include <BifrostHeaders.h>
 // Bifrost headers - END
-
-// Houdini headers - START
-#include <GU/GU_Detail.h>
-// Houdini headers - END
 
 namespace po = boost::program_options;
 
-int process_points(const Bifrost::API::Component& component,
-                   const std::string& position_channel_name,
-                   const std::string& velocity_channel_name,
-				   GU_Detail&       gdp)
+int main(int argc, char **argv)
 {
-    int positionChannelIndex = findChannelIndexViaName(component,position_channel_name.c_str());
-    if (positionChannelIndex<0)
-        return 1;
-    int velocityChannelIndex = findChannelIndexViaName(component,velocity_channel_name.c_str());
-    if (velocityChannelIndex<0)
-        return 1;
-    const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
-    if (!position_ch.valid())
-        return 1;
-    const Bifrost::API::Channel& velocity_ch = component.channels()[velocityChannelIndex];
-    if (!velocity_ch.valid())
-        return 1;
-    if ( position_ch.dataType() != Bifrost::API::FloatV3Type)
-        return 1;
-    if ( velocity_ch.dataType() != Bifrost::API::FloatV3Type)
-        return 1;
+	try {
+    std::string density_channel_name("density");
+    std::string position_channel_name("position");
+    std::string velocity_channel_name("velocity");
+    std::string vorticity_channel_name("vorticity");
+    std::string droplet_channel_name("droplet");
+    std::string bifrost_filename;
+    std::string bgeo_filename;
 
-    Bifrost::API::Layout layout = component.layout();
-    size_t depthCount = layout.depthCount();
-    for ( size_t d=0; d<depthCount; d++ )
-    {
-        for ( size_t t=0; t<layout.tileCount(d); t++ )
-        {
-            Bifrost::API::TreeIndex tindex(t,d);
-            if ( !position_ch.elementCount( tindex ) )
-            {
-                // nothing there
-                continue;
-            }
-            if (position_ch.elementCount( tindex ) != velocity_ch.elementCount( tindex ))
-                return 1;
-            const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
-            const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
-            bool process_velocities = position_tile_data.count() == velocity_tile_data.count();
-            GA_RWAttributeRef   v_attrib;
-            if (process_velocities)
-            {
-            	v_attrib = gdp.addFloatTuple(GA_ATTRIB_POINT, "v", 3);
-            	if (v_attrib.isValid())
-            		v_attrib.getAttribute()->setTypeInfo(GA_TYPE_VECTOR);
-            	else
-            		std::cerr << "v_attrib is NOT valid" << std::endl;
-            }
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("help", "Produce help message")
+        ("density", po::value<std::string>(&density_channel_name)->default_value(density_channel_name),
+         (boost::format("Density channel name. Defaults to '%1%'") % density_channel_name).str().c_str())
+		("position", po::value<std::string>(&position_channel_name)->default_value(position_channel_name),
+	     (boost::format("Position channel name. Defaults to '%1%'") % position_channel_name).str().c_str())
+		("velocity", po::value<std::string>(&velocity_channel_name)->default_value(velocity_channel_name),
+	     (boost::format("Velocity channel name. Defaults to '%1%'") % velocity_channel_name).str().c_str())
+		("vorticity", po::value<std::string>(&vorticity_channel_name)->default_value(vorticity_channel_name),
+	     (boost::format("Vorticity channel name. Defaults to '%1%'") % vorticity_channel_name).str().c_str())
+		("droplet", po::value<std::string>(&droplet_channel_name)->default_value(droplet_channel_name),
+	     (boost::format("Droplet channel name. Defaults to '%1%'") % droplet_channel_name).str().c_str())
+        ("bif", po::value<std::string>(&bifrost_filename),
+         "Bifrost file. [Required]")
+        ("geo", po::value<std::string>(&bgeo_filename),
+         "(B)geo file. [Required]")
+        ;
 
-            for (size_t i=0; i<position_tile_data.count(); i++ )
-            {
-                UT_Vector4 point_position(position_tile_data[i][0],
-                			 position_tile_data[i][1],
-							 position_tile_data[i][2]);
-                GEO_Point *ppt = gdp.appendPointElement();
-                ppt->setPos(point_position);
-                if (process_velocities)
-                	ppt->setValue<UT_Vector3>(v_attrib,UT_Vector3(velocity_tile_data[i][0],
-                			velocity_tile_data[i][1],
-							velocity_tile_data[i][2]));
-            }
-        }
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help") || bifrost_filename.empty() || bgeo_filename.empty()) {
+        std::cout << desc << "\n";
+        return 1;
     }
-    
-    return 0;
-}
 
-int process_bifrost_file(const std::string& bifrost_filename,
-                         const std::string& position_channel_name,
-                         const std::string& velocity_channel_name,
-						 GU_Detail&       gdp)
-{
+    // Bifrost file handling
     Bifrost::API::String biffile = bifrost_filename.c_str();
     Bifrost::API::ObjectModel om;
     Bifrost::API::FileIO fileio = om.createFileIO( biffile );
     const Bifrost::API::BIF::FileInfo& info = fileio.info();
+    bool is_bifrost_liquid_file(true);
+
+    // Need to determine is the BIF file contains Foam or Liquid particle info
+    if (std::string(info.componentName.c_str()).find("Foam")!=std::string::npos)
+    	is_bifrost_liquid_file = false;
 
     // Need to load the entire file's content to process
     Bifrost::API::StateServer ss = fileio.load( );
     if (ss.valid())
     {
         size_t numComponents = ss.components().count();
-        for (size_t componentIndex=0;componentIndex<numComponents;componentIndex++)
+        if (numComponents>0)
         {
-            Bifrost::API::Component component = ss.components()[componentIndex];
-            Bifrost::API::TypeID componentType = component.type();
-            if (componentType == Bifrost::API::PointComponentType)
-            {
-                process_points(component,position_channel_name,velocity_channel_name,gdp);
-            }
-            else if (componentType == Bifrost::API::VoxelComponentType)
-            {
-                // process_voxels(component,gdp);
-            }
+            std::cout << boost::format("numComponents = %1%") % numComponents << std::endl;
         }
     }
     else
@@ -126,95 +81,15 @@ int process_bifrost_file(const std::string& bifrost_filename,
                   << std::endl;
         return 1;
     }
-    
-    return 0;
-}
 
-#ifdef HOUDINI_CODE
-#include <GU/GU_Detail.h>
-#include <iostream>
-
-int
-main(int argc, char *argv[])
-{
-    GU_Detail       gdp;
+    // Houdini Geometry handling
+    GU_Detail gdp;
     UT_BoundingBox  bounds;
-    double scale = 10.0;
-	
-    // Evaluate the iso-surface inside this bounding box                                                                                                                                                         
-    bounds.setBounds(-scale, -scale, -scale, scale, scale, scale);
-
-    // Add velocity attribute
-    GA_RWAttributeRef   v_attrib = gdp.addFloatTuple(GA_ATTRIB_POINT, "v", 3);
-    if (v_attrib.isValid())
-    	v_attrib.getAttribute()->setTypeInfo(GA_TYPE_VECTOR);
-    else
-    	std::cerr << "v_attrib is NOT valid" << std::endl;
-
-	// Create particle points
-    const int numParticles = 100000;
-    for (size_t i = 0; i<numParticles;i++)
-    {
-        UT_Vector4 v(
-                     (drand48()-0.5)*scale,
-                     (drand48()-0.5)*scale,
-                     (drand48()-0.5)*scale
-                     );
-        GEO_Point *ppt = gdp.appendPointElement();
-        ppt->setPos(v);
-        ppt->setValue<UT_Vector3>(v_attrib,UT_Vector3(0,1,0));
-    }
-
-    // Save to sphere.bgeo                                                                                                                                                                                       
-    gdp.save("points.bgeo", NULL);
-	
-    return 0;
-}
-#endif // HOUDINI_CODE
-
-int main(int argc, char **argv)
-{
-
-    try {
-        std::string position_channel_name("position");
-        std::string velocity_channel_name("velocity");
-        std::string bifrost_filename;
-        std::string bgeo_filename;
-        po::options_description desc("Allowed options");
-        desc.add_options()
-        		("version", "print version string")
-				("help", "produce help message")
-				("input-file,i", po::value<std::string >(&bifrost_filename),
-						"Bifrost file")
-				("output-file,o", po::value<std::string >(&bgeo_filename),
-						"Houdini BGEO file");
-
-        po::variables_map vm;
-        po::store(po::parse_command_line(argc, argv, desc), vm);
-        po::notify(vm);
-
-
-        if (vm.count("help")) {
-            std::cout << desc << "\n";
-            return 1;
-        }
-        if (bifrost_filename.size()>4 && bgeo_filename.size()>4)
-        {
-        	// Do conversion
-            GU_Detail       gdp;
-
-            process_bifrost_file(bifrost_filename,
-                                 position_channel_name,
-                                 velocity_channel_name,
-								 gdp);
-
-            gdp.save(bgeo_filename.c_str(),NULL);
-        }
-        else
-        {
-            std::cout << desc << "\n";
-            return 1;
-        }
+    UT_Options	options("bool   geo:saveinfo",	(int)1,
+    					"string info:software", "bif2bgeo",
+						"string info:comment", "info@proceduralinsight.com",
+						NULL);
+    gdp.save(bgeo_filename.c_str(),&options);
     }
     catch(std::exception& e) {
         std::cerr << "error: " << e.what() << "\n";
@@ -225,5 +100,4 @@ int main(int argc, char **argv)
     }
 
     return 0;
-
 }

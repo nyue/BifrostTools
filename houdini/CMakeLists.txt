@@ -1,1 +1,4 @@
 ADD_SUBDIRECTORY ( bif2bgeo )
+ADD_SUBDIRECTORY ( converter )
+ADD_SUBDIRECTORY ( mantra )
+ADD_SUBDIRECTORY ( translator )

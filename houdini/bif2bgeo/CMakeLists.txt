@@ -3,11 +3,13 @@ HDK_ADD_EXECUTABLE ( bif2bgeo
   )
 
 TARGET_LINK_LIBRARIES ( bif2bgeo
-  bifrostcore
-  bifrostapi
-  Base
   ${Boost_LIBRARIES}
-  utils
+  ${Bifrost_api_LIBRARY}
+#  bifrostcore
+#  bifrostapi
+#  Base
+#  ${Boost_LIBRARIES}
+#  utils
   )
 
 INSTALL ( TARGETS
