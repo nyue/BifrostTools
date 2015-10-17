@@ -32,10 +32,12 @@ int main(int argc, char **argv)
         std::string droplet_channel_name("droplet");
         std::string bifrost_filename;
         std::string alembic_filename;
+        bool enable_hdf5_alembic = false;
         float fps = 24.0f;
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help", "Produce help message")
+            ("hdf5", "Enable HDF5 alembic instead of Ogawa. Defaults to Ogawa")
             ("fps", po::value<float>(&fps),
              "Frames per second to scale velocity when determining the velocity-attenuated bounding box. Defaults to 24.0")
             ("density", po::value<std::string>(&density_channel_name)->default_value(density_channel_name),
@@ -62,6 +64,9 @@ int main(int argc, char **argv)
         if (vm.count("help") || bifrost_filename.empty() || alembic_filename.empty()) {
             std::cout << desc << "\n";
             return 1;
+        }
+        if (vm.count("hdf5")) {
+        	enable_hdf5_alembic = true;
         }
 
         Bifrost2Alembic b2a(bifrost_filename,

@@ -12,7 +12,7 @@
 
 // Alembic headers - START
 #include <Alembic/AbcGeom/All.h>
-// #include <Alembic/AbcCoreHDF5/All.h>
+#include <Alembic/AbcCoreHDF5/All.h>
 #include <Alembic/AbcCoreOgawa/All.h>
 #include <Alembic/Util/All.h>
 #include <Alembic/Abc/All.h>
@@ -40,7 +40,8 @@ public:
 					const std::string& velocity_channel_name,
 					const std::string& density_channel_name,
 					const std::string& vorticity_channel_name,
-					const std::string& droplet_channel_name);
+					const std::string& droplet_channel_name,
+					bool enable_hdf5_alembic = false);
 	virtual ~Bifrost2Alembic();
 	bool translate();
 protected:
@@ -97,6 +98,7 @@ private:
 	std::string _density_channel_name;
 	std::string _vorticity_channel_name;
 	std::string _droplet_channel_name;
+	bool        _enable_hdf5_alembic;
 };
 
 // == Emacs ================

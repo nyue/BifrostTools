@@ -1,4 +1,5 @@
 #include "Bifrost2Alembic.h"
+#include <boost/shared_ptr.hpp>
 
 Alembic::AbcGeom::GeometryScope Bifrost2Alembic::_geometry_parameter_scope = Alembic::AbcGeom::kVaryingScope;
 
@@ -8,7 +9,8 @@ Bifrost2Alembic::Bifrost2Alembic(const std::string& bifrost_filename,
 								 const std::string& velocity_channel_name,
 								 const std::string& density_channel_name,
 								 const std::string& vorticity_channel_name,
-								 const std::string& droplet_channel_name)
+								 const std::string& droplet_channel_name,
+								 bool enable_hdf5_alembic)
 : _bifrost_filename(bifrost_filename)
 , _alembic_filename(alembic_filename)
 , _position_channel_name(position_channel_name)
@@ -16,6 +18,7 @@ Bifrost2Alembic::Bifrost2Alembic(const std::string& bifrost_filename,
 , _density_channel_name(density_channel_name)
 , _vorticity_channel_name(vorticity_channel_name)
 , _droplet_channel_name(droplet_channel_name)
+, _enable_hdf5_alembic(enable_hdf5_alembic)
 {
 
 }
@@ -50,13 +53,28 @@ bool Bifrost2Alembic::translate()
              * after loading and there is at least one component
              */
 
-            Alembic::AbcGeom::OArchive archive(Alembic::Abc::CreateArchiveWithInfo(
-            		// Alembic::AbcCoreHDF5::WriteArchive(),
-            		Alembic::AbcCoreOgawa::WriteArchive(),
+        	boost::shared_ptr<Alembic::AbcGeom::OArchive> archive_ptr;
+        	if (_enable_hdf5_alembic)
+        	{
+        		archive_ptr.reset(new Alembic::AbcGeom::OArchive(Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(),
+        																							 _alembic_filename.c_str(),
+																									 std::string("Procedural Insight Pty. Ltd."),
+																									 std::string("info@proceduralinsight.com"))));
+        	} else {
+        		archive_ptr.reset(new Alembic::AbcGeom::OArchive(Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreOgawa::WriteArchive(),
+        																							 _alembic_filename.c_str(),
+																									 std::string("Procedural Insight Pty. Ltd."),
+																									 std::string("info@proceduralinsight.com"))));
+        	}
+#ifdef ONLY_OGAWA
+            Alembic::AbcGeom::OArchive archive(Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreOgawa::WriteArchive(),
                                                                                    _alembic_filename.c_str(),
                                                                                    std::string("Procedural Insight Pty. Ltd."),
                                                                                    std::string("info@proceduralinsight.com")));
             Alembic::AbcGeom::OObject topObj( archive, Alembic::AbcGeom::kTop );
+#else // ONLY_OGAWA
+        	Alembic::AbcGeom::OObject topObj( *archive_ptr, Alembic::AbcGeom::kTop );
+#endif // ONLY_OGAWA
             Alembic::AbcGeom::OXform xform = addXform(topObj,"bif2abc");
 
             // Create the time sampling
