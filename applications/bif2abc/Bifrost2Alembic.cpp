@@ -218,6 +218,8 @@ bool Bifrost2Alembic::process_point_component(bool is_bifrost_liquid_file,
                 continue;
             }
 
+            float _MVS = layout.voxelScale();
+            // std::cerr << boost::format("_MVS = %1%") % _MVS << std::endl;
             const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>( tindex );
             const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
             const Bifrost::API::TileData<float>& density_tile_data = density_ch.tileData<float>( tindex );
@@ -229,9 +231,9 @@ bool Bifrost2Alembic::process_point_component(bool is_bifrost_liquid_file,
             // Position
             for (size_t i=0; i<position_tile_data.count(); i++ )
             {
-                Imath::V3f point_position(position_tile_data[i][0],
-										  position_tile_data[i][1],
-										  position_tile_data[i][2]);
+                Imath::V3f point_position(position_tile_data[i][0]*_MVS,
+										  position_tile_data[i][1]*_MVS,
+										  position_tile_data[i][2]*_MVS);
                 positions.push_back(point_position);
                 bounds.extendBy(point_position);
                 ids.push_back(currentId);
