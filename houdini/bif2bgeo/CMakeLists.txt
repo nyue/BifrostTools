@@ -3,6 +3,7 @@ HDK_ADD_EXECUTABLE ( bif2bgeo
   )
 
 TARGET_LINK_LIBRARIES ( bif2bgeo
+  houdini_utils
   ${Boost_LIBRARIES}
   ${Bifrost_api_LIBRARY}
   )
