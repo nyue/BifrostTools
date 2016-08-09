@@ -59,7 +59,7 @@ ELSE (APPLE)
   SET ( CMAKE_INSTALL_RPATH "${MAYA_LOCATION}/plug-ins/bifrost/lib:${MAYA_LOCATION}/lib" )
   IF (BUILD_HOUDINI_TOOLS)
     SET ( CMAKE_INSTALL_RPATH
-      $ENV{HDSO}
+      "$ENV{HDSO}:${CMAKE_INSTALL_RPATH}"
       )
   ENDIF ()
   MESSAGE ( "DEBUGGING = ${MAYA_LOCATION}/plug-ins/bifrost/lib")
