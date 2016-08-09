@@ -127,6 +127,9 @@ Bifrost_IOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, bool ate_magic)
 	// float bifrost_scale = 0.0;
 
 	Bifrost::API::RefArray channels = component.channels();
+	// We must process the point position first as this will setup the correct
+	// point range for all subsequent attribute, otherwise attribute process
+	// before position will not be initialized into the GEO_Detail pointer
     for (size_t channelIndex=0;channelIndex<info.channelCount;channelIndex++)
     {
         const Bifrost::API::BIF::FileInfo::ChannelInfo& channelInfo = fileio.channelInfo(channelIndex);
@@ -137,7 +140,58 @@ Bifrost_IOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, bool ate_magic)
         {
         	if (channelInfo.name.find(nameMappingIter->first.c_str()) != Bifrost::API::String::npos)
         	{
-				 bool is_point_position = channelInfo.name.find("position") != Bifrost::API::String::npos;
+        		bool is_point_position = channelInfo.name.find("position") != Bifrost::API::String::npos;
+
+        		if (is_point_position)
+        		{
+        			switch (channelInfo.dataType)
+        			{
+        			case		Bifrost::API::FloatV3Type:	/*!< Defines a channel of type amino::Math::vec3f. #3 */
+						{
+							typedef amino::Math::vec3f DataType;
+							std::vector<DataType> channel_data_array;
+							Bifrost::API::Channel channel = channels[channelIndex];
+
+							bool successfully_processed = processChannelData<DataType>(component,channel,is_point_position,channel_data_array);
+							if (successfully_processed)
+							{
+								size_t numParticles = channel_data_array.size();
+								/*GA_Offset p_offset = */gdp->appendPointBlock(numParticles);
+								GA_Range p_range = gdp->getPointRange();
+
+								UT_ValArray<UT_Vector3> v3_array(numParticles);
+								for (size_t i = 0; i<numParticles;i++)
+									v3_array.array()[i].assign(channel_data_array[i].v[0],channel_data_array[i].v[1],channel_data_array[i].v[2]);
+								gdp->setPos3FromArray(p_range,v3_array);
+							}
+							else
+							{
+								// Return early, no point processing the other attribute if position is not found
+								return GA_Detail::IOStatus(false);
+							}
+						}
+        			break;
+        			default:
+        				break;
+        			}
+        		}
+        	}
+        }
+    }
+
+
+    bool is_point_position = false;
+	// Now process all the remaining attribute
+    for (size_t channelIndex=0;channelIndex<info.channelCount;channelIndex++)
+    {
+        const Bifrost::API::BIF::FileInfo::ChannelInfo& channelInfo = fileio.channelInfo(channelIndex);
+
+        BifrostChannelNameToHoudiniAttributeNameMap::const_iterator nameMappingIter = _bcn2han_map.begin();
+        BifrostChannelNameToHoudiniAttributeNameMap::const_iterator nameMappingEIter = _bcn2han_map.end();
+        for (;nameMappingIter!=nameMappingEIter;++nameMappingIter)
+        {
+        	if (channelInfo.name.find(nameMappingIter->first.c_str()) != Bifrost::API::String::npos)
+        	{
 
         		switch (channelInfo.dataType)
         		{
@@ -205,17 +259,7 @@ Bifrost_IOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, bool ate_magic)
 						if (successfully_processed)
 						{
 							size_t numParticles = channel_data_array.size();
-							if (is_point_position)
-							{
-								/*GA_Offset p_offset = */gdp->appendPointBlock(numParticles);
-								GA_Range p_range = gdp->getPointRange();
-
-								UT_ValArray<UT_Vector3> v3_array(numParticles);
-								for (size_t i = 0; i<numParticles;i++)
-									v3_array.array()[i].assign(channel_data_array[i].v[0],channel_data_array[i].v[1],channel_data_array[i].v[2]);
-								gdp->setPos3FromArray(p_range,v3_array);
-							}
-							else
+							if (!is_point_position)
 							{
 								GA_RWHandleV3 v3_attrib(gdp->findAttribute(GA_ATTRIB_POINT,nameMappingIter->second.c_str()));
 								if (!v3_attrib.isValid())
