@@ -46,7 +46,7 @@ Bifrost_IOTranslator::duplicate() const
 const char *
 Bifrost_IOTranslator::formatName() const
 {
-    return "Autodesk Maya Bifrost Format v2 (Read-Only)\n\tExtensions: .bif";
+    return (boost::format("Autodesk Maya Bifrost Format v2 (Read-Only) built : %1% %2%\n\tExtensions: .bif") % __DATE__ % __TIME__).str().c_str();
 }
 
 int
