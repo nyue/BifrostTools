@@ -307,11 +307,12 @@ bool BifrostSurfaceShape::processChannelData(Bifrost::API::Component& component,
 	return true;
 }
 
-bool BifrostSurfaceShape::loadParticleData(const MString&              i_bifrost_filename,
-		GLfloatVector& o_particlePositions)
+bool BifrostSurfaceShape::loadParticleData(const MString& i_bifrost_filename,
+										   GLfloatVector& o_particlePositions,
+										   GLuintVector&  o_particleGLIndices)
 {
 	o_particlePositions.clear();
-
+	o_particleGLIndices.clear();
 
 	Bifrost::API::String biffile = i_bifrost_filename.asChar();
 
@@ -339,15 +340,17 @@ bool BifrostSurfaceShape::loadParticleData(const MString&              i_bifrost
 	for (size_t channelIndex=0;channelIndex<info.channelCount;channelIndex++)
 	{
 		const Bifrost::API::BIF::FileInfo::ChannelInfo& channelInfo = fileio.channelInfo(channelIndex);
-
+		std::cout << boost::format("channelInfo.name = %1%") % channelInfo.name.c_str() << std::endl;
 		bool is_point_position = channelInfo.name.find("position") != Bifrost::API::String::npos;
 
 		if (is_point_position)
 		{
+			std::cout << boost::format("FOUND position = %1%") % channelInfo.name.c_str() << std::endl;
 			switch (channelInfo.dataType)
 			{
 			case		Bifrost::API::FloatV3Type:	/*!< Defines a channel of type amino::Math::vec3f. #3 */
 			{
+				std::cout << "FOUND suitable FloatV3Type"<< std::endl;
 				typedef amino::Math::vec3f DataType;
 				std::vector<DataType> channel_data_array;
 				Bifrost::API::Channel channel = channels[channelIndex];
@@ -356,6 +359,7 @@ bool BifrostSurfaceShape::loadParticleData(const MString&              i_bifrost
 				if (successfully_processed)
 				{
 					size_t numParticles = channel_data_array.size();
+					std::cout << boost::format("SUCCESSFULLY processed %1% points") % numParticles << std::endl;
 					//								for (size_t i = 0; i<numParticles;i++)
 					//									v3_array.array()[i].assign(channel_data_array[i].v[0],channel_data_array[i].v[1],channel_data_array[i].v[2]);
 					for (size_t i = 0; i<numParticles;i++)
@@ -363,7 +367,11 @@ bool BifrostSurfaceShape::loadParticleData(const MString&              i_bifrost
 						o_particlePositions.push_back(channel_data_array[i].v[0]);
 						o_particlePositions.push_back(channel_data_array[i].v[1]);
 						o_particlePositions.push_back(channel_data_array[i].v[2]);
+						_particleBBox.expand(MPoint(channel_data_array[i].v[0],channel_data_array[i].v[1],channel_data_array[i].v[2]));
+						o_particleGLIndices.push_back(i);
 					}
+					_hasParticleData = true;
+
 				}
 				else
 				{
@@ -429,12 +437,13 @@ MStatus BifrostSurfaceShape::compute( const MPlug& plug, MDataBlock& data_block 
 	{
 		CMS(MDataHandle inputPathHdl = data_block.inputValue( _inBifrostFileAttr, &status ));
 		MString bifrostFilePath = inputPathHdl.asString();
-		if (_BifrostFilePath != bifrostFilePath)
+		if (bifrostFilePath.length()>0 && _BifrostFilePath != bifrostFilePath)
 		{
 			MGlobal::displayInfo((boost::format("compute() NEW _inBifrostFileAttr = '%1%'") % bifrostFilePath.asChar()).str().c_str());
 			_BifrostFilePathChanged = true;
+			_BifrostFilePath = bifrostFilePath;
 
-			if (!loadParticleData(_BifrostFilePath,_particlePositions))
+			if (!loadParticleData(_BifrostFilePath,_particlePositions,_particleGLIndices))
 				return MStatus::kFailure;
 		}
 	}

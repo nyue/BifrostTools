@@ -3,17 +3,17 @@
 #include "BifrostSurfaceShapeCacheCommand.h"
 #include <maya/MFnPlugin.h>
 #include "MayaUtils.h"
+#include <boost/format.hpp>
 
 MStatus initializePlugin( MObject obj )
 {
   MStatus status;
 
-  char versionStrBuf[BUFSIZ]="1.1.1";
-  // sprintf(versionStrBuf,"Version %d.%d.%d, compiled %s on %s",MAJOR_VERSION_NUMBER,MINOR_VERSION_NUMBER,PATCH_VERSION_NUMBER,__TIME__,__DATE__);
+  boost::format version_format = boost::format("Version %d.%d.%d, compiled %s on %s") % MAJOR_VERSION_NUMBER % MINOR_VERSION_NUMBER % PATCH_VERSION_NUMBER % __DATE__ % __TIME__ ;
 
   MFnPlugin plugin( obj,
                     "Procedural Insight Pty. Ltd. info@procedualinsight.com",
-                    versionStrBuf,
+					version_format.str().c_str(),
                     "Any");
   CMS(status = plugin.registerShape( "BifrostSurfaceShape",
                                      BifrostSurfaceShape::typeId,

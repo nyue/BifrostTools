@@ -87,7 +87,8 @@ private:
 							std::vector<T>& o_channel_data_array) const;
 	void setChannelNamesList(const MStringArray& attrList);
 	bool loadParticleData(const MString& i_bifrost_filename,
-						  GLfloatVector& o_particlePositions);
+						  GLfloatVector& o_particlePositions,
+						  GLuintVector& o_particleGLIndices);
     void drawBBox(const MBoundingBox& bbox) const;
 	MBoundingBox _particleBBox;
 	static MObject _inBifrostFileAttr;
