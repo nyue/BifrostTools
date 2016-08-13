@@ -11,7 +11,7 @@ global proc AEBifrostCacheFileNameNew(string $fileNameAttr)
             setParent ..;
 		setParent ..;
 	setParent ..;
-
+	print ("AEBifrostCacheFileNameNew() $fileNameAttr=" + $fileNameAttr +"\n");
 	AEBifrostCacheFileNameReplace( $fileNameAttr );
 }
 
@@ -37,6 +37,7 @@ global proc AEBifrostCacheCacheFileBrowser( string $fileNameAttr )
         return;
     }
 
+	print ("AEBifrostCacheCacheFileBrowser() $result[0] = '" + $result[0] +"'\n");
     // set the file name attribute of the cache node
     setAttr $fileNameAttr -type "string" $result[0];
 
@@ -56,6 +57,7 @@ global proc AEBifrostCacheFileNameReplace(string $fileNameAttr)
 	//
     connectControl -fileName fileNameField $fileNameAttr;
     button -e -c ("AEBifrostCacheCacheFileBrowser " + $fileNameAttr) browser;
+	print ("AEBifrostCacheFileNameReplace() $fileName=" + $fileName +"\n");
 }
 
 global proc AEBifrostSurfaceShapeTemplate(string $nodeName)

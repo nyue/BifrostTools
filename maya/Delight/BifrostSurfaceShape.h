@@ -1,10 +1,26 @@
 #pragma once
 
 #include <iostream>
+
+// Bifrost headers - START
+#include <bifrostapi/bifrost_om.h>
+#include <bifrostapi/bifrost_stateserver.h>
+#include <bifrostapi/bifrost_component.h>
+#include <bifrostapi/bifrost_fileio.h>
+#include <bifrostapi/bifrost_fileutils.h>
+#include <bifrostapi/bifrost_string.h>
+#include <bifrostapi/bifrost_channel.h>
+#include <bifrostapi/bifrost_tiledata.h>
+#include <bifrostapi/bifrost_types.h>
+#include <bifrostapi/bifrost_layout.h>
+// Bifrost headers - END
+
+
 #include <maya/MPxSurfaceShape.h>
 #include <maya/MStatus.h>
 #include <maya/M3dView.h>
 #include <maya/MStringArray.h>
+
 #include <vector>
 
 class BifrostSurfaceShape : public MPxSurfaceShape
@@ -64,16 +80,14 @@ public:
 	static MStatus initialize();
 	static MTypeId typeId;
 private:
+	template<typename T>
+	bool processChannelData(Bifrost::API::Component& component,
+							Bifrost::API::Channel& channel_data,
+							bool i_is_point_position,
+							std::vector<T>& o_channel_data_array) const;
 	void setChannelNamesList(const MStringArray& attrList);
-
-// 	void processParticleData(const Nb::Body*     body,
-// 							 const Nb::String&   channels);
-// 	void processMeshData(const Nb::Body*         body,
-// 						 const Nb::String&       channels,
-// 						 BodyMeshDataCollection& bm);
-// 	void processFieldData(const Nb::Body*     body,
-// 						  const Nb::String&   channels,
-// 						  BodyFieldDataCollection& bf);
+	bool loadParticleData(const MString& i_bifrost_filename,
+						  GLfloatVector& o_particlePositions);
     void drawBBox(const MBoundingBox& bbox) const;
 	MBoundingBox _particleBBox;
 	static MObject _inBifrostFileAttr;
@@ -89,6 +103,7 @@ private:
 	GLuintVector _particleGLIndices;
 
 	MString _BifrostFilePath;
+	bool _BifrostFilePathChanged;
 	bool _hasParticleColor;
 	bool _hasParticleData;
 

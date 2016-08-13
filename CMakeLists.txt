@@ -37,6 +37,10 @@ INCLUDE_DIRECTORIES ( ${BIFROST_INCLUDE_DIR} )
 # For the single point of header include of Bifrost headers
 INCLUDE_DIRECTORIES ( . )
 
+SET ( BIFROST_REQUIRED_LIBRARIES
+  ${Bifrost_api_LIBRARY}
+  )
+
 IF ( WIN32 )
   ADD_DEFINITIONS ( /D_CRT_SECURE_NO_WARNINGS )
 ELSE ()
