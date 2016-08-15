@@ -56,13 +56,11 @@ ENDIF ()
 # LINK_DIRECTORIES ( ${MAYA_LIBRARY_DIR} )
 MESSAGE ( "MAYA_LIBRARY_DIR = ${MAYA_LIBRARY_DIR}")
 IF (APPLE)
-  LINK_DIRECTORIES (
-    ${MAYA_LOCATION}/../plug-ins/bifrost/bin
-    ${MAYA_LOCATION}/../Maya.app/Contents/MacOS 
-    )		     
-  SET ( CMAKE_INSTALL_RPATH "${MAYA_LOCATION}/../plug-ins/bifrost/bin:${MAYA_LOCATION}/../Maya.app/Contents/MacOS" )
-  SET ( CMAKE_MACOSX_RPATH "${MAYA_LOCATION}/../plug-ins/bifrost/bin:${MAYA_LOCATION}/../Maya.app/Contents/MacOS" )
-ELSE (APPLE)	     
+  SET ( BIFROST_RPATH "${BIFROST_LOCATION}/bin")
+  # MESSAGE ( "BIFROST_RPATH = ${BIFROST_RPATH}")
+  SET ( CMAKE_INSTALL_RPATH ${BIFROST_RPATH} )
+ELSE (APPLE)
+  # Todo : follow OS X way
   SET ( CMAKE_INSTALL_RPATH "${MAYA_LOCATION}/plug-ins/bifrost/lib:${MAYA_LOCATION}/lib" )
   IF (BUILD_HOUDINI_TOOLS)
     SET ( CMAKE_INSTALL_RPATH
