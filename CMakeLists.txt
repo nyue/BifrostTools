@@ -81,6 +81,7 @@ INCLUDE_DIRECTORIES ( . )
 
 ADD_SUBDIRECTORY ( utils )
 ADD_SUBDIRECTORY ( applications )
+IF ( BUILD_TOOLS )
 # Houdini requirement are stringent and often at odds
 # with other DCC application, as such, we can't build
 # them together.
@@ -91,3 +92,4 @@ ELSE ( BUILD_HOUDINI_TOOLS )
   ADD_SUBDIRECTORY ( maya )
   ADD_SUBDIRECTORY ( procedural )
 ENDIF ( BUILD_HOUDINI_TOOLS )
+ENDIF ( BUILD_TOOLS )
