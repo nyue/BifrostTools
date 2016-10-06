@@ -54,6 +54,7 @@ bool Bifrost2Alembic::translate()
              */
 
         	boost::shared_ptr<Alembic::AbcGeom::OArchive> archive_ptr;
+#ifdef BIF2ABC_ENABLE_ALEMBIC_HDF5
         	if (_enable_hdf5_alembic)
         	{
         		archive_ptr.reset(new Alembic::AbcGeom::OArchive(Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(),
@@ -66,15 +67,14 @@ bool Bifrost2Alembic::translate()
 																									 std::string("Procedural Insight Pty. Ltd."),
 																									 std::string("info@proceduralinsight.com"))));
         	}
-#ifdef ONLY_OGAWA
-            Alembic::AbcGeom::OArchive archive(Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreOgawa::WriteArchive(),
+			Alembic::AbcGeom::OObject topObj(*archive_ptr, Alembic::AbcGeom::kTop);
+#else // BIF2ABC_ENABLE_ALEMBIC_HDF5
+			Alembic::AbcGeom::OArchive archive(Alembic::Abc::CreateArchiveWithInfo(Alembic::AbcCoreOgawa::WriteArchive(),
                                                                                    _alembic_filename.c_str(),
                                                                                    std::string("Procedural Insight Pty. Ltd."),
                                                                                    std::string("info@proceduralinsight.com")));
             Alembic::AbcGeom::OObject topObj( archive, Alembic::AbcGeom::kTop );
-#else // ONLY_OGAWA
-        	Alembic::AbcGeom::OObject topObj( *archive_ptr, Alembic::AbcGeom::kTop );
-#endif // ONLY_OGAWA
+#endif // BIF2ABC_ENABLE_ALEMBIC_HDF5
             Alembic::AbcGeom::OXform xform = addXform(topObj,"bif2abc");
 
             // Create the time sampling

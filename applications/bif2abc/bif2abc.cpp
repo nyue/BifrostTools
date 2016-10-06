@@ -1,15 +1,17 @@
 #include <stdlib.h>
-#include <utils/BifrostUtils.h>
-#include <boost/format.hpp>
 #include <boost/program_options.hpp>
+#include <boost/format.hpp>
 #include <iostream>
 #include <strstream>
 #include <stdexcept>
 #include <OpenEXR/ImathBox.h>
+#include <utils/BifrostUtils.h>
 
 // Alembic headers - START
 #include <Alembic/AbcGeom/All.h>
+#ifdef BIF2ABC_ENABLE_ALEMBIC_HDF5
 #include <Alembic/AbcCoreHDF5/All.h>
+#endif // BIF2ABC_ENABLE_ALEMBIC_HDF5
 #include <Alembic/Util/All.h>
 #include <Alembic/Abc/All.h>
 #include <Alembic/AbcCoreAbstract/All.h>
@@ -23,7 +25,6 @@ namespace po = boost::program_options;
 
 int main(int argc, char **argv)
 {
-
     try {
         std::string density_channel_name("density");
         std::string position_channel_name("position");
@@ -85,9 +86,7 @@ int main(int argc, char **argv)
     catch(...) {
         std::cerr << "Exception of unknown type!\n";
     }
-
     return 0;
-
 }
 
 // == Emacs ================

@@ -12,7 +12,9 @@
 
 // Alembic headers - START
 #include <Alembic/AbcGeom/All.h>
+#ifdef BIF2ABC_ENABLE_ALEMBIC_HDF5
 #include <Alembic/AbcCoreHDF5/All.h>
+#endif // BIF2ABC_ENABLE_ALEMBIC_HDF5
 #include <Alembic/AbcCoreOgawa/All.h>
 #include <Alembic/Util/All.h>
 #include <Alembic/Abc/All.h>
