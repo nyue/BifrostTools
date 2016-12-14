@@ -4,6 +4,8 @@
 // Houdini header - START
 #include <GU/GU_Detail.h>
 #include <UT/UT_FileUtil.h>
+#include <UT/UT_Options.h>
+#include <GA/GA_SaveOptions.h>
 // Houdini header - END
 
 // Bifrost headers - START
@@ -63,7 +65,8 @@ bool Bifrost2HoudiniGeo::process()
 						"string info:software", "bif2bgeo",
 						"string info:comment", "info@proceduralinsight.com",
 						NULL);
-	gdp.save(_hougeo_filename.c_str(),&options);
+	GA_SaveOptions gaso;
+	gdp.save(_hougeo_filename.c_str(),&gaso);
 
 	return true;
 }
