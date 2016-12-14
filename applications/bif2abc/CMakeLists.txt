@@ -1,3 +1,5 @@
+FIND_PACKAGE ( Alembic REQUIRED )
+
 IF ( BUILD_HOUDINI_TOOLS )
   # Use the Alembic files that comes with Houdini to
   # avoid symbol clash due to version/build/runtime differences
