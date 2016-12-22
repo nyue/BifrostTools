@@ -4,6 +4,7 @@ ADD_EXECUTABLE ( bifdump
 
 TARGET_LINK_LIBRARIES ( bifdump
   ${Bifrost_SDK_LIBRARIES}
+  ${Tbb_TBB_LIBRARY}
   )
 
 INSTALL ( TARGETS
