@@ -1,7 +1,6 @@
+FIND_PACKAGE ( Alembic 1.5.4 REQUIRED )
+
 IF ( BUILD_HOUDINI_TOOLS )
-  # Use the Alembic files that comes with Houdini to
-  # avoid symbol clash due to version/build/runtime differences
-  # especially on OSX
 
   # For reference
   # ${Alembic_Alembic_LIBRARY}
@@ -107,14 +106,16 @@ ELSE ( BUILD_HOUDINI_TOOLS )
   
   MESSAGE ( "BIF2ABC_ALEMBIC_LIBRARIES = ${BIF2ABC_ALEMBIC_LIBRARIES}" )
 ENDIF ( BUILD_HOUDINI_TOOLS )
+INCLUDE_DIRECTORIES ( ${ALEMBIC_INCLUDE_DIR} )
 
 ADD_EXECUTABLE ( bif2abc
   bif2abc.cpp
   Bifrost2Alembic.cpp
   )
-MESSAGE ( "Boost_LIBRARIES = ${Boost_LIBRARIES}")
+
 TARGET_LINK_LIBRARIES ( bif2abc
-  ${BIF2ABC_ALEMBIC_LIBRARIES}
+  ${Alembic_LIBRARIES}
+  ${Ilmbase_LIBRARIES}
   ${Boost_LIBRARIES}
   ${Bifrost_SDK_LIBRARIES}
   utils

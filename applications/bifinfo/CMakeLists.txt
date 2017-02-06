@@ -5,6 +5,7 @@ ADD_EXECUTABLE ( bifinfo
 TARGET_LINK_LIBRARIES ( bifinfo
   ${Bifrost_SDK_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${Tbb_TBB_LIBRARY}
   utils
   )
 

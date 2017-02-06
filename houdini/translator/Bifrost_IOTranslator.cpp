@@ -80,7 +80,8 @@ bool Bifrost_IOTranslator::processChannelData(Bifrost::API::Component& component
 	// if ( channel_data ) {
 		Bifrost::API::Layout layout = component.layout();
 		float voxel_scale = layout.voxelScale();
-		// std::cout << boost::format("Voxel Scale = %1%") % voxel_scale << std::endl;
+		// if (i_is_point_position)
+		//	std::cout << boost::format("Voxel Scale = %1%") % voxel_scale << std::endl;
 		size_t depthCount = layout.depthCount();
 
 
@@ -258,8 +259,11 @@ Bifrost_IOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, bool ate_magic)
 						typedef amino::Math::vec3f DataType;
 						std::vector<DataType> channel_data_array;
 						Bifrost::API::Channel channel = channels[channelIndex];
-
-						bool successfully_processed = processChannelData<DataType>(component,channel,is_point_position,channel_data_array);
+						// std::cout << "CHANNEL NAME " << channel.name().c_str() << std::endl;
+						// std::cout << "CHANNEL IS POSITION " << (channel.name().compare("position") == 0 ? "true" : "false") << std::endl;
+						bool successfully_processed = processChannelData<DataType>(component,channel,
+							channel.name().compare("position") == 0, // is_point_position,
+							channel_data_array);
 						if (successfully_processed)
 						{
 							size_t numParticles = channel_data_array.size();
