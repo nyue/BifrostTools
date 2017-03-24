@@ -5,9 +5,12 @@
 #include <GU/GU_Detail.h>
 #include <UT/UT_FileUtil.h>
 #include <UT/UT_Options.h>
-#if SYS_VERSION_MAJOR_INT > 15
+#include <SYS/SYS_Version.h>
+
+#if SYS_VERSION_MAJOR_INT >= 15
 #include <GA/GA_SaveOptions.h>
 #endif
+
 // Houdini header - END
 
 // Bifrost headers - START
@@ -67,7 +70,7 @@ bool Bifrost2HoudiniGeo::process()
 						"string info:software", "bif2bgeo",
 						"string info:comment", "info@proceduralinsight.com",
 						NULL);
-#if SYS_VERSION_MAJOR_INT > 15
+#if SYS_VERSION_MAJOR_INT >= 15
 	GA_SaveOptions gaso;
 	gdp.save(_hougeo_filename.c_str(),&gaso);
 #else
