@@ -2,7 +2,7 @@
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <iostream>
-#include <strstream>
+#include <sstream>
 #include <stdexcept>
 #include <OpenEXR/ImathBox.h>
 
@@ -229,7 +229,7 @@ int process_bifrost_file(const std::string& bifrost_filename,
                         process_bounds("Points only",bounds);
                         process_bounds_as_renderman("Points only",bounds);
                         {
-                            std::ostrstream ostream;
+                            std::stringstream ostream;
                             bounds_as_wavefront_strstream(bounds, ostream);
                             ostream << '\0';
                             std::cout << ostream.str();
