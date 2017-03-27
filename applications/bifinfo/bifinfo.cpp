@@ -174,6 +174,108 @@ int determine_points_with_velocity_bbox(const Bifrost::API::Component& component
     return 0;
 }
 
+void VoxelComponentTypeBBox(BBOX                           bbox_type,
+                            const Bifrost::API::Component& component)
+{
+
+	{
+	    Bifrost::Math::Similarity toWorld;
+
+	    Bifrost::API::Dictionary dict = component.dictionary();
+
+	    Bifrost::API::String dict_json = dict.saveJSON();
+        std::cout << boost::format("Dictionary as JSON = '%1%'") % dict_json.c_str() << std::endl;
+
+
+	    if(component.dictionary().hasValue("inv") && component.dictionary().hasValue("sim") )
+	    {
+	        toWorld.inv = component.dictionary().value<amino::Math::mat44f>("inv");
+	        toWorld.sim = component.dictionary().value<amino::Math::mat44f>("sim");
+	        std::cout << boost::format("Component inverse matrix = %1%") % toWorld.inv << std::endl;
+	        std::cout << boost::format("Component simulation matrix = %1%") % toWorld.sim << std::endl;
+	    }
+
+	}
+
+    Bifrost::API::Layout layout = component.layout();
+    float voxel_scale = layout.voxelScale();
+    std::string density_channel_name("density");
+
+    int densityChannelIndex = findChannelIndexViaName(component,density_channel_name.c_str());
+    if (densityChannelIndex<0)
+        return;
+
+    const Bifrost::API::Channel& density_ch = component.channels()[densityChannelIndex];
+    if (!density_ch.valid())
+        return;
+
+    if ( density_ch.dataType() != Bifrost::API::FloatType)
+    	return;
+
+    size_t depthCount = layout.depthCount();
+
+
+    if (false)
+    {
+    for ( size_t d=0; d<depthCount; d++ ) {
+        for ( size_t t=0; t<layout.tileCount(d); t++ ) {
+            Bifrost::API::TreeIndex tindex(t,d);
+            if ( !density_ch.elementCount( tindex ) ) {
+                // nothing there
+                continue;
+            }
+            const Bifrost::API::TileData<float>& density_tile_data = density_ch.tileData<float>( tindex );
+            for (size_t i=0; i<density_tile_data.count(); i++ ) {
+                std::cout << boost::format("Density[%1%][%2%][%3%] = %4%") % d % t % i % density_tile_data[i] << std::endl;
+            }
+        }
+    }
+    }
+    std::cout << boost::format("Voxel scale        = %1%") % voxel_scale << std::endl;
+    std::cout << boost::format("Layout depth count = %1%") % depthCount << std::endl;
+}
+
+void PointComponentTypeBBox(BBOX                           bbox_type,
+                            const std::string&             position_channel_name,
+                            const std::string&             velocity_channel_name,
+                            const Bifrost::API::Component& component,
+                            const float*                   fps)
+{
+    Imath::Box3f bounds;
+    int bbox_status;
+    switch(bbox_type)
+    {
+    case BBOX::PointsOnly :
+        bbox_status = determine_points_bbox(component,
+                                            position_channel_name,
+                                            bounds);
+        process_bounds("[NEW] PointComponentType : Points only",bounds);
+        process_bounds_as_renderman("[NEW] PointComponentType : Points only",bounds);
+        {
+            std::stringstream ostream;
+            bounds_as_wavefront_strstream(bounds, ostream);
+            ostream << '\0';
+            std::cout << ostream.str();
+        }
+
+        break;
+    case BBOX::PointsWithVelocity :
+        bbox_status = determine_points_with_velocity_bbox(component,
+                                                          position_channel_name,
+                                                          velocity_channel_name,
+                                                          *fps,
+                                                          bounds);
+        process_bounds("[NEW] PointComponentType : Points with velocity",bounds);
+        process_bounds_as_renderman("[NEW] PointComponentType : Points with velocity",bounds);
+        break;
+    default:
+        break;
+    }
+
+
+
+}
+
 int process_bifrost_file(const std::string& bifrost_filename,
                          const std::string& position_channel_name,
                          const std::string& velocity_channel_name,
@@ -217,41 +319,13 @@ int process_bifrost_file(const std::string& bifrost_filename,
                 Bifrost::API::Component component = ss.components()[componentIndex];
                 Bifrost::API::TypeID componentType = component.type();
                 if (componentType == Bifrost::API::PointComponentType)
-                {
-                    Imath::Box3f bounds;
-                    int bbox_status;
-                    switch(bbox_type)
-                    {
-                    case BBOX::PointsOnly :
-                        bbox_status = determine_points_bbox(component,
-                                                            position_channel_name,
-                                                            bounds);
-                        process_bounds("Points only",bounds);
-                        process_bounds_as_renderman("Points only",bounds);
-                        {
-                            std::stringstream ostream;
-                            bounds_as_wavefront_strstream(bounds, ostream);
-                            ostream << '\0';
-                            std::cout << ostream.str();
-                        }
-
-                        break;
-                    case BBOX::PointsWithVelocity :
-                        bbox_status = determine_points_with_velocity_bbox(component,
-                                                                          position_channel_name,
-                                                                          velocity_channel_name,
-                                                                          *fps,
-                                                                          bounds);
-                        process_bounds("Points with velocity",bounds);
-                        process_bounds_as_renderman("Points with velocity",bounds);
-                        break;
-                    default:
-                        break;
-                    }
-
-
-
-                }
+                    PointComponentTypeBBox(bbox_type,
+                                           position_channel_name,
+                                           velocity_channel_name,
+                                           component,
+                                           fps);
+                else if (componentType == Bifrost::API::VoxelComponentType)
+                	VoxelComponentTypeBBox(bbox_type, component);
             }
         }
         else

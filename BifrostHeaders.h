@@ -11,4 +11,5 @@
 #include <bifrostapi/bifrost_tiledata.h>
 #include <bifrostapi/bifrost_types.h>
 #include <bifrostapi/bifrost_layout.h>
+#include <bifrostapi/bifrost_dictionary.h>
 // Bifrost headers - END
