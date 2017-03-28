@@ -198,6 +198,8 @@ void VoxelComponentTypeBBox(BBOX                           bbox_type,
 	}
 
     Bifrost::API::Layout layout = component.layout();
+	Bifrost::API::TileAccessor accessor = layout.tileAccessor();
+
     float voxel_scale = layout.voxelScale();
     std::string density_channel_name("density");
 
@@ -215,7 +217,7 @@ void VoxelComponentTypeBBox(BBOX                           bbox_type,
     size_t depthCount = layout.depthCount();
 
 
-    if (false)
+    if (true)
     {
     for ( size_t d=0; d<depthCount; d++ ) {
         for ( size_t t=0; t<layout.tileCount(d); t++ ) {
@@ -225,9 +227,17 @@ void VoxelComponentTypeBBox(BBOX                           bbox_type,
                 continue;
             }
             const Bifrost::API::TileData<float>& density_tile_data = density_ch.tileData<float>( tindex );
+			const Bifrost::API::Tile tile = accessor.tile(tindex);
+			const Bifrost::API::TileInfo tile_info = tile.info();
+			const Bifrost::API::TileDimInfo tile_dim_info = tile_info.dimInfo;
+			// tile.coord()
+			size_t data_count = density_tile_data.count();
+			std::cout << boost::format("data_count[d=%1%][t=%2%] = %3%") % d % t % data_count << std::endl;
+			/*
             for (size_t i=0; i<density_tile_data.count(); i++ ) {
                 std::cout << boost::format("Density[%1%][%2%][%3%] = %4%") % d % t % i % density_tile_data[i] << std::endl;
             }
+			*/
         }
     }
     }
