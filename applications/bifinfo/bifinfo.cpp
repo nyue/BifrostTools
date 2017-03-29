@@ -8,6 +8,8 @@
 
 #include <BifrostHeaders.h>
 
+typedef std::vector<Bifrost::API::String> StringContainer;
+
 namespace po = boost::program_options;
 
 // A helper function to simplify the main part.
@@ -286,6 +288,265 @@ void PointComponentTypeBBox(BBOX                           bbox_type,
 
 }
 
+void process_VoxelComponentType(const Bifrost::API::Component& component)
+{
+	{
+		std::cout << "process_VoxelComponentType() START" << std::endl;
+		Bifrost::API::Layout layout = component.layout();
+		size_t depth_count = layout.depthCount();
+		Bifrost::API::RefArray channel_array = component.channels();
+		size_t num_channels = channel_array.count();
+		std::cout << boost::format("process_VoxelComponentType() number of channels %1%") % num_channels << std::endl;
+		for (size_t channel_index = 0; channel_index < num_channels; ++channel_index)
+		{
+			const Bifrost::API::Channel current_channel = channel_array[channel_index];
+			size_t channel_element_count = current_channel.elementCount();
+			std::cout << boost::format("process_VoxelComponentType() channel_element_count %1%") % channel_element_count << std::endl;
+			for (size_t depth_index = 0; depth_index < depth_count; depth_index++) {
+				Bifrost::API::TileDimInfo tile_dim_info = layout.tileDimInfo(depth_index);
+				std::cout << boost::format("process_VoxelComponentType() tile_dim_info[%1%][%2%] tileSize = %3%, tileWidth = %4%, depthWidth = %5%, voxelWidth = %6%")
+					% current_channel.name()
+					% depth_index
+					% tile_dim_info.tileSize
+					% tile_dim_info.tileWidth
+					% tile_dim_info.depthWidth
+					% tile_dim_info.voxelWidth
+					<< std::endl;
+				size_t tile_count = layout.tileCount(depth_index);
+				for (size_t tile_index = 0; tile_index < tile_count; tile_index++) {
+					Bifrost::API::TreeIndex tree_index(tile_index, depth_index);
+					switch (current_channel.dataType())
+					{
+					case Bifrost::API::FloatType : //,		/*!< Type float */
+						// std::cout << "Channel type is FloatType" << std::endl;
+					{
+						
+						const Bifrost::API::TileData<float>& channel_data = current_channel.tileData<float>(tree_index);
+						size_t channel_data_count = channel_data.count();
+						std::cout << boost::format("process_VoxelComponentType() channel[%1%] count = %2%") % current_channel.name() % channel_data_count << std::endl;
+						for (size_t channel_data_index = 0; channel_data_index<channel_data_count; channel_data_index++) {
+							// std::cout << boost::format("process_VoxelComponentType() channel[%1%][%2%] =  %3%") % current_channel.name() % channel_data_index % channel_data[channel_data_index] << std::endl;
+						}
+					}
+						break;
+					case Bifrost::API::FloatV2Type : //,	/*!< Type amino::Math::vec2f */
+						// std::cout << "Channel type is FloatV2Type" << std::endl;
+						break;
+					case Bifrost::API::FloatV3Type : //,	/*!< Type amino::Math::vec3f */
+						std::cout << "Channel type is FloatV3Type" << std::endl;
+						break;
+					case Bifrost::API::Int32Type : //,		/*!< Type int32_t */
+						std::cout << "Channel type is Int32Type" << std::endl;
+						break;
+					case Bifrost::API::Int64Type : //,		/*!< Type int64_t */
+						std::cout << "Channel type is Int64Type" << std::endl;
+						break;
+					case Bifrost::API::UInt32Type : //,		/*!< Type uint32_t */
+						std::cout << "Channel type is UInt32Type" << std::endl;
+						break;
+					case Bifrost::API::UInt64Type : //,		/*!< Type uint64_t */
+						std::cout << "Channel type is UInt64Type" << std::endl;
+						break;
+					case Bifrost::API::Int32V2Type : //,	/*!< Type amino::Math::vec2i */
+						std::cout << "Channel type is Int32V2Type" << std::endl;
+						break;
+					case Bifrost::API::Int32V3Type : //,	/*!< Type amino::Math::vec3i */
+						std::cout << "Channel type is Int32V3Type" << std::endl;
+						break;
+					case Bifrost::API::FloatV4Type : //,	/*!< Type amino::Math::vec4f */
+						std::cout << "Channel type is FloatV4Type" << std::endl;
+						break;
+					case Bifrost::API::FloatMat44Type : //,	/*!< Type amino::Math::mat44f */
+						std::cout << "Channel type is FloatMat44Type" << std::endl;
+						break;
+					case Bifrost::API::Int8Type : //,		/*!< Type int8_t */
+						std::cout << "Channel type is Int8Type" << std::endl;
+						break;
+					case Bifrost::API::Int16Type : //,		/*!< Type int16_t */
+						std::cout << "Channel type is Int16Type" << std::endl;
+						break;
+					case Bifrost::API::UInt8Type : //,		/*!< Type uint8_t */
+						std::cout << "Channel type is UInt8Type" << std::endl;
+						break;
+					case Bifrost::API::UInt16Type : //,		/*!< Type uint16_t */
+						std::cout << "Channel type is UInt16Type" << std::endl;
+						break;
+					case Bifrost::API::BoolType : //,		/*!< Type bool */
+						std::cout << "Channel type is BoolType" << std::endl;
+						break;
+					case Bifrost::API::StringClassType : //,	/*!< Type Bifrost::API::String class */
+						std::cout << "Channel type is StringClassType" << std::endl;
+						break;
+					case Bifrost::API::DictionaryClassType : //,	/*!< Type Bifrost::API::Dictionary class */
+						std::cout << "Channel type is DictionaryClassType" << std::endl;
+						break;
+					case Bifrost::API::UInt64V2Type : //,	/*!< Type amino::Math::vec2ui64 */
+						std::cout << "Channel type is UInt64V2Type" << std::endl;
+						break;
+					case Bifrost::API::UInt64V3Type : //,	/*!< Type amino::Math::vec3ui64 */
+						std::cout << "Channel type is UInt64V3Type" << std::endl;
+						break;
+					case Bifrost::API::UInt64V4Type : //,	/*!< Type amino::Math::vec4ui64 */
+						std::cout << "Channel type is UInt64V4Type" << std::endl;
+						break;
+					case Bifrost::API::StringArrayClassType : // /*!< Type Bifrost::API::StringArray class */
+						std::cout << "Channel type is StringArrayClassType" << std::endl;
+						break;
+					case Bifrost::API::NoneType : // = 0,		/*!< Undefined data type */
+						std::cout << "Channel type is NoneType" << std::endl;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+
+#ifdef NICHOLAS
+	int positionChannelIndex = findChannelIndexViaName(component, position_channel_name.c_str());
+	if (positionChannelIndex<0)
+		return 1;
+	const Bifrost::API::Channel& position_ch = component.channels()[positionChannelIndex];
+	if (!position_ch.valid())
+		return 1;
+	if (position_ch.dataType() != Bifrost::API::FloatV3Type)
+		return 1;
+
+	Bifrost::API::Layout layout = component.layout();
+	size_t depthCount = layout.depthCount();
+	for (size_t d = 0; d<depthCount; d++) {
+		for (size_t t = 0; t<layout.tileCount(d); t++) {
+			Bifrost::API::TreeIndex tindex(t, d);
+			if (!position_ch.elementCount(tindex)) {
+				// nothing there
+				continue;
+			}
+
+			const Bifrost::API::TileData<amino::Math::vec3f>& position_tile_data = position_ch.tileData<amino::Math::vec3f>(tindex);
+			// const Bifrost::API::TileData<amino::Math::vec3f>& velocity_tile_data = velocity_ch.tileData<amino::Math::vec3f>( tindex );
+			for (size_t i = 0; i<position_tile_data.count(); i++) {
+				bounds.extendBy(Imath::V3f(position_tile_data[i][0],
+					position_tile_data[i][1],
+					position_tile_data[i][2]));
+			}
+		}
+	}
+
+
+#endif // NICHOLAS
+	std::cout << "process_VoxelComponentType() END" << std::endl;
+}
+
+int process_bifrost_voxel(const std::string& bifrost_filename)
+{
+	// using namespace Bifrost::API;
+
+	Bifrost::API::String biffile = bifrost_filename.c_str();
+	Bifrost::API::ObjectModel om;
+	Bifrost::API::FileIO fileio = om.createFileIO(biffile);
+	Bifrost::API::StateServer ss = fileio.load();
+	if (ss.valid())
+	{
+		const Bifrost::API::BIF::FileInfo& info = fileio.info();
+
+		std::cout << boost::format("Version        : %1%") % info.version << std::endl;
+		std::cout << boost::format("Frame          : %1%") % info.frame << std::endl;
+		std::cout << boost::format("Channel count  : %1%") % info.channelCount << std::endl;
+		std::cout << boost::format("Component name : %1%") % info.componentName.c_str() << std::endl;
+		std::cout << boost::format("Component type : %1%") % info.componentType.c_str() << std::endl;
+		std::cout << boost::format("Object name    : %1%") % info.objectName.c_str() << std::endl;
+		std::cout << boost::format("Layout name    : %1%") % info.layoutName.c_str() << std::endl;
+
+		StringContainer channel_names;
+		for (size_t channelIndex = 0; channelIndex<info.channelCount; channelIndex++)
+		{
+			std::cout << std::endl;
+			const Bifrost::API::BIF::FileInfo::ChannelInfo& channelInfo = fileio.channelInfo(channelIndex);
+			std::cout << boost::format("\t""Channel name  : %1%") % channelInfo.name.c_str() << std::endl;
+			std::cout << boost::format("\t""Data type     : %1%") % channelInfo.dataType << std::endl;
+			std::cout << boost::format("\t""Max depth     : %1%") % channelInfo.maxDepth << std::endl;
+			std::cout << boost::format("\t""Tile count    : %1%") % channelInfo.tileCount << std::endl;
+			std::cout << boost::format("\t""Element count : %1%") % channelInfo.elementCount << std::endl;
+			channel_names.push_back(channelInfo.name);
+		}
+
+		size_t numComponents = ss.components().count();
+		std::cout << boost::format("StateServer components count : %1%") % numComponents << std::endl;
+		for (size_t componentIndex = 0; componentIndex<numComponents; componentIndex++)
+		{
+			Bifrost::API::Component component = ss.components()[componentIndex];
+			Bifrost::API::TypeID componentType = component.type();
+			std::cout << boost::format("component[%1%] of type %2%") % componentIndex % componentType << std::endl;
+			if (componentType == Bifrost::API::VoxelComponentType)
+			{
+				process_VoxelComponentType(component);
+			}
+		}
+
+
+	}
+
+	return 0;
+}
+
+int process_bifrost_voxel_autodesk(const std::string& bifrost_filename)
+{
+	using namespace Bifrost::API;
+
+	String biffile = bifrost_filename.c_str();
+	ObjectModel om;
+	FileIO fileio = om.createFileIO(biffile);
+	StateServer ss = fileio.load();
+	std::cout << "00000" << std::endl;
+	if (ss) {
+		std::cout << "01000" << std::endl;
+		// traverse the tree and iterate tile children
+		RefArray layouts = ss.layouts();
+		Layout layout = layouts[0];
+		TileAccessor tacc = layout.tileAccessor();
+		size_t depth = layout.maxDepth();
+		TileIterator it = layout.tileIterator(depth, depth, BreadthFirst);
+
+		while (it) {
+			std::cout << "02000" << std::endl;
+			// Get tile info to access children
+			Tile tile = *it;
+			TreeIndex itIndex = it.index();
+			TreeIndex tindex = tile.index();
+			TileInfo info = tile.info();
+		
+			// access children with i,j,k coordinates
+			if (info.hasChildren) {
+				std::cout << "03000" << std::endl;
+				TileDimInfo dinfo = info.dimInfo;
+				for (int i = 0; i<dinfo.tileWidth; i++) {
+					for (int j = 0; j<dinfo.tileWidth; j++) {
+						for (int k = 0; k<dinfo.tileWidth; k++) {
+							std::cout << "04000" << std::endl;
+							TreeIndex cindex = tile.child(i, j, k);
+
+							// log the child tile info
+							if (cindex.valid()) {
+								Tile child = tacc.tile(cindex);
+								TileInfo cinfo = child.info();
+
+								std::cout << "tile id: " << cinfo.id << std::endl;
+								std::cout << "	tile is valid: " << cinfo.valid << std::endl;
+								std::cout << "	tile space coordinates: " << cinfo.i << ", " << cinfo.j << ", " << cinfo.k << std::endl;
+								std::cout << "	tile index: " << cinfo.tile << ":" << cinfo.depth << std::endl;
+								std::cout << "	tile parent: " << cinfo.parent << std::endl;
+								std::cout << "	tile has children: " << cinfo.hasChildren << std::endl;
+							}
+						}
+					}
+				}
+			}
+			++it;
+		}
+	}
+	return 0;
+}
+
 int process_bifrost_file(const std::string& bifrost_filename,
                          const std::string& position_channel_name,
                          const std::string& velocity_channel_name,
@@ -351,57 +612,62 @@ int process_bifrost_file(const std::string& bifrost_filename,
 int main(int argc, char **argv)
 {
 
-    try {
-        typedef std::vector<std::string> StringContainer;
-        std::string position_channel_name("position");
-        std::string velocity_channel_name("velocity");
-        BBOX bbox_type = BBOX::None;
-        std::string bifrost_filename;
-        float fps = 24.0f;
-        po::options_description desc("Allowed options");
-        desc.add_options()
-            ("version", "print version string")
-            ("help", "produce help message")
-            ("bbox", po::value<BBOX>(&bbox_type), "Analyze the entire file to obtain the overall bounding box [0:None, 1:PointsOnly, 2:PointsWithVelocity]")
-            ("fps", po::value<float>(&fps),
-             "Frames per second to scale velocity when determining the velocity-attenuated bounding box. Defaults to 24.0")
-            ("input-file", po::value<std::vector<std::string> >(),
-             "input files")
-            ;
+	try {
+		typedef std::vector<std::string> StringContainer;
+		std::string position_channel_name("position");
+		std::string velocity_channel_name("velocity");
+		BBOX bbox_type = BBOX::None;
+		std::string bifrost_filename;
+		float fps = 24.0f;
+		po::options_description desc("Allowed options");
+		desc.add_options()
+			("version", "print version string")
+			("help", "produce help message")
+			("bbox", po::value<BBOX>(&bbox_type), "Analyze the entire file to obtain the overall bounding box [0:None, 1:PointsOnly, 2:PointsWithVelocity]")
+			("fps", po::value<float>(&fps),
+				"Frames per second to scale velocity when determining the velocity-attenuated bounding box. Defaults to 24.0")
+				("input-file", po::value<std::vector<std::string> >(),
+					"input files")
+			;
 
-        po::positional_options_description p;
-        p.add("input-file", -1);
+		po::positional_options_description p;
+		p.add("input-file", -1);
 
-        po::variables_map vm;
-        po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
-        po::notify(vm);
+		po::variables_map vm;
+		po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
+		po::notify(vm);
 
-        if (vm.count("help")) {
-            std::cout << desc << "\n";
-            return 1;
-        }
-        if (vm.count("input-file"))
-        {
-            std::cout << "Input files are: "
-                      << vm["input-file"].as< std::vector<std::string> >() << "\n";
-            if (vm["input-file"].as< std::vector<std::string> >().size() == 1)
-            {
-                bifrost_filename = vm["input-file"].as< std::vector<std::string> >()[0];
-            }
-            else
-            {
-                std::cout << desc << "\n";
-                return 1;
-            }
-        }
-        std::cout << "fps = " << fps << std::endl;
-        if (bifrost_filename.size()>0)
-            process_bifrost_file(bifrost_filename,
-                                 position_channel_name,
-                                 velocity_channel_name,
-                                 bbox_type,
-                                 bbox_type==BBOX::PointsWithVelocity?&fps:0);
-        else
+		if (vm.count("help")) {
+			std::cout << desc << "\n";
+			return 1;
+		}
+		if (vm.count("input-file"))
+		{
+			std::cout << "Input files are: "
+				<< vm["input-file"].as< std::vector<std::string> >() << "\n";
+			if (vm["input-file"].as< std::vector<std::string> >().size() == 1)
+			{
+				bifrost_filename = vm["input-file"].as< std::vector<std::string> >()[0];
+			}
+			else
+			{
+				std::cout << desc << "\n";
+				return 1;
+			}
+		}
+		std::cout << "fps = " << fps << std::endl;
+		if (bifrost_filename.size() > 0)
+		{
+			process_bifrost_voxel(bifrost_filename);
+			/*
+			process_bifrost_file(bifrost_filename,
+				position_channel_name,
+				velocity_channel_name,
+				bbox_type,
+				bbox_type == BBOX::PointsWithVelocity ? &fps : 0);
+				*/
+		}
+		else
         {
             std::cout << desc << "\n";
             return 1;

@@ -8,9 +8,11 @@
 #include <bifrostapi/bifrost_fileutils.h>
 #include <bifrostapi/bifrost_string.h>
 #include <bifrostapi/bifrost_channel.h>
+#include <bifrostapi/bifrost_tile.h>
 #include <bifrostapi/bifrost_tiledata.h>
+#include <bifrostapi/bifrost_tileaccessor.h>
+#include <bifrostapi/bifrost_tileiterator.h>
 #include <bifrostapi/bifrost_types.h>
 #include <bifrostapi/bifrost_layout.h>
 #include <bifrostapi/bifrost_dictionary.h>
-#include <bifrostapi/bifrost_tileaccessor.h>
 // Bifrost headers - END
