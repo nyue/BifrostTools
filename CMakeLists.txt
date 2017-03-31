@@ -88,6 +88,7 @@ ENDIF ()
 INCLUDE_DIRECTORIES ( . )
 
 ADD_SUBDIRECTORY ( utils )
+ADD_SUBDIRECTORY ( dev )
 ADD_SUBDIRECTORY ( applications )
 IF ( BUILD_TOOLS )
 # Houdini requirement are stringent and often at odds
