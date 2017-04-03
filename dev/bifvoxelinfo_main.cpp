@@ -85,7 +85,7 @@ void process_VoxelComponentType(const Bifrost::API::Component& component)
 					case Bifrost::API::Int32V3Type: //,	/*!< Type amino::Math::vec3i */
 						std::cout << "Channel type is Int32V3Type" << std::endl;
 						break;
-#if BIFROST_VERSION > 10
+#if BIFROST_VERSION >= 20
 					case Bifrost::API::FloatV4Type: //,	/*!< Type amino::Math::vec4f */
 						std::cout << "Channel type is FloatV4Type" << std::endl;
 						break;
@@ -125,7 +125,7 @@ void process_VoxelComponentType(const Bifrost::API::Component& component)
 					case Bifrost::API::StringArrayClassType: // /*!< Type Bifrost::API::StringArray class */
 						std::cout << "Channel type is StringArrayClassType" << std::endl;
 						break;
-#endif // BIFROST_VERSION > 10
+#endif // BIFROST_VERSION >= 20
 					case Bifrost::API::NoneType: // = 0,		/*!< Undefined data type */
 						std::cout << "Channel type is NoneType" << std::endl;
 						break;
