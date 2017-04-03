@@ -55,14 +55,14 @@ void process_VoxelComponentType(const Bifrost::API::Component& component)
 
 						const Bifrost::API::TileData<float>& channel_data = current_channel.tileData<float>(tree_index);
 						size_t channel_data_count = channel_data.count();
-						std::cout << boost::format("process_VoxelComponentType() channel[%1%] count = %2%") % current_channel.name() % channel_data_count << std::endl;
+						// std::cout << boost::format("process_VoxelComponentType() channel[%1%] count = %2%") % current_channel.name() % channel_data_count << std::endl;
 						for (size_t channel_data_index = 0; channel_data_index<channel_data_count; channel_data_index++) {
 							// std::cout << boost::format("process_VoxelComponentType() channel[%1%][%2%] =  %3%") % current_channel.name() % channel_data_index % channel_data[channel_data_index] << std::endl;
 						}
 					}
 					break;
 					case Bifrost::API::FloatV2Type: //,	/*!< Type amino::Math::vec2f */
-													// std::cout << "Channel type is FloatV2Type" << std::endl;
+						std::cout << "Channel type is FloatV2Type" << std::endl;
 						break;
 					case Bifrost::API::FloatV3Type: //,	/*!< Type amino::Math::vec3f */
 						std::cout << "Channel type is FloatV3Type" << std::endl;
@@ -85,6 +85,7 @@ void process_VoxelComponentType(const Bifrost::API::Component& component)
 					case Bifrost::API::Int32V3Type: //,	/*!< Type amino::Math::vec3i */
 						std::cout << "Channel type is Int32V3Type" << std::endl;
 						break;
+#if BIFROST_VERSION > 10
 					case Bifrost::API::FloatV4Type: //,	/*!< Type amino::Math::vec4f */
 						std::cout << "Channel type is FloatV4Type" << std::endl;
 						break;
@@ -124,6 +125,7 @@ void process_VoxelComponentType(const Bifrost::API::Component& component)
 					case Bifrost::API::StringArrayClassType: // /*!< Type Bifrost::API::StringArray class */
 						std::cout << "Channel type is StringArrayClassType" << std::endl;
 						break;
+#endif // BIFROST_VERSION > 10
 					case Bifrost::API::NoneType: // = 0,		/*!< Undefined data type */
 						std::cout << "Channel type is NoneType" << std::endl;
 						break;
@@ -229,7 +231,7 @@ int main(int argc, char **argv)
 		}
 		if (bifrost_filename.size() > 0)
 		{
-			// process_bifrost_voxel(bifrost_filename);
+			process_bifrost_voxel(bifrost_filename);
 		}
 		else
 		{

@@ -8,3 +8,9 @@ TARGET_LINK_LIBRARIES ( bifvoxelinfo
   ${Tbb_TBB_LIBRARY}
   utils
   )
+
+INSTALL ( TARGETS
+  bifvoxelinfo
+  DESTINATION
+  bin
+  )
