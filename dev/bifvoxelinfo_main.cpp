@@ -2,6 +2,7 @@
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <OpenEXR/ImathBox.h>
@@ -20,12 +21,102 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 	return os;
 }
 
+void Box2WavefrontString(const Imath::V3f o_box[8], std::string& o_obj_string)
+{
+	std::ostringstream oss;
+	const size_t vertex_count = 8;
+	oss << "g" << std::endl;
+	for (size_t index = 0; index < vertex_count; index++ )
+	{
+		oss << boost::format("v %1% %2% %3%") % o_box[index].x % o_box[index].y % o_box[index].z << std::endl;
+	}
+	oss << "g" << std::endl;
+	// right handed coordinate system, indices starts from 1
+	oss << "f 1 2 3 4" << std::endl; // front
+	oss << "f 1 5 6 2" << std::endl; // top
+	oss << "f 2 6 7 3" << std::endl; // left
+	oss << "f 1 4 8 5" << std::endl; // right
+	oss << "f 3 7 8 4" << std::endl; // bottom
+	oss << "f 5 8 7 6" << std::endl; // back
+
+	o_obj_string = oss.str();
+}
+
+void Centroid2Box(float x, float y, float z, float width, Imath::V3f o_bbox[8])
+{
+	// z direction front
+	o_bbox[0] = Imath::V3f(x + width, y + width, z + width);
+	o_bbox[1] = Imath::V3f(x - width, y + width, z + width);
+	o_bbox[2] = Imath::V3f(x - width, y - width, z + width);
+	o_bbox[3] = Imath::V3f(x + width, y - width, z + width);
+
+	// z direction back
+	o_bbox[4] = Imath::V3f(x + width, y + width, z - width);
+	o_bbox[5] = Imath::V3f(x - width, y + width, z - width);
+	o_bbox[6] = Imath::V3f(x - width, y - width, z - width);
+	o_bbox[7] = Imath::V3f(x + width, y - width, z - width);
+}
+
 void process_VoxelComponentType(const Bifrost::API::Component& component)
+{
+	std::cout << "process_VoxelComponentType() START" << std::endl;
+	Bifrost::API::Layout layout = component.layout();
+	size_t max_depth = layout.maxDepth();
+	std::cout << boost::format("process_VoxelComponentType() max_depth %1%") % max_depth << std::endl;
+	Bifrost::API::RefArray channel_array = component.channels();
+	size_t num_channels = channel_array.count();
+	std::cout << boost::format("process_VoxelComponentType() number of channels %1%") % num_channels << std::endl;
+	size_t channel_index = 0;
+	// for (size_t channel_index = 0; channel_index < num_channels; ++channel_index)
+	{
+		const Bifrost::API::Channel current_channel = channel_array[channel_index];
+		Bifrost::API::TileIterator tIter = layout.tileIterator(max_depth, max_depth, Bifrost::API::TraversalMode::DepthFirst);
+		int tile_index = 0;
+		const float voxel_width = 0.5f;
+		while (tIter)
+		{
+			// std::string i_obj_filename = "voxel_tiles.%04d.obj";
+			char i_obj_filename[64];
+			sprintf(i_obj_filename, "voxel_tiles.%04d.obj", tile_index);
+			std::ofstream wavefront_file;
+			wavefront_file.open(i_obj_filename);
+			wavefront_file << "# yue.nicholas@gmail.com\n";
+
+			Bifrost::API::Tile tile = *tIter;
+			Bifrost::API::TileInfo info = tile.info();
+
+			// log the tile info
+			std::cout << "tile id: " << info.id << std::endl;
+			std::cout << "	tile is valid: " << info.valid << std::endl;
+			std::cout << "	tile space coordinates: " << info.i << ", " << info.j << ", " << info.k << std::endl;
+			std::cout << "	tile index: " << info.tile << ":" << info.depth << std::endl;
+			std::cout << "	tile parent: " << info.parent << std::endl;
+			std::cout << "	tile has children: " << info.hasChildren << std::endl;
+
+			Imath::V3f box[8];
+			std::string obj_string;
+			Centroid2Box(info.i, info.j, info.k, voxel_width, box);
+			Box2WavefrontString(box, obj_string);
+			wavefront_file << obj_string.c_str();
+
+			tile_index++;
+			++tIter;
+
+			wavefront_file.close();
+		}
+
+		std::cout << boost::format("process_VoxelComponentType() tile_index %1%") % tile_index << std::endl;
+	}
+}
+
+
+void process_VoxelComponentType_old(const Bifrost::API::Component& component)
 {
 	{
 		std::cout << "process_VoxelComponentType() START" << std::endl;
 		Bifrost::API::Layout layout = component.layout();
 		size_t depth_count = layout.depthCount();
+		std::cout << boost::format("process_VoxelComponentType() depth_count %1%") % depth_count << std::endl;
 		Bifrost::API::RefArray channel_array = component.channels();
 		size_t num_channels = channel_array.count();
 		std::cout << boost::format("process_VoxelComponentType() number of channels %1%") % num_channels << std::endl;
@@ -62,7 +153,7 @@ void process_VoxelComponentType(const Bifrost::API::Component& component)
 					}
 					break;
 					case Bifrost::API::FloatV2Type: //,	/*!< Type amino::Math::vec2f */
-						std::cout << "Channel type is FloatV2Type" << std::endl;
+						// std::cout << "Channel type is FloatV2Type" << std::endl;
 						break;
 					case Bifrost::API::FloatV3Type: //,	/*!< Type amino::Math::vec3f */
 						std::cout << "Channel type is FloatV3Type" << std::endl;
