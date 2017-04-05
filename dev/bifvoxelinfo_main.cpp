@@ -42,37 +42,53 @@ void Box2WavefrontString(const Imath::V3f o_box[8], std::string& o_obj_string)
 	o_obj_string = oss.str();
 }
 
-void Centroid2Box(float x, float y, float z, float width, Imath::V3f o_bbox[8])
+void Centroid2Box(float centroid_x, float centroid_y, float centroid_z,
+				  float tile_width, float voxel_scale, Imath::V3f o_bbox[8])
 {
+	float half_width = tile_width * voxel_scale * 0.5;
+	float offset_x = half_width;
+	float offset_y = half_width;
+	float offset_z = half_width;
+	// std::cout << boost::format("Centroid2Box() half_width %1%") % half_width << std::endl;
+	float x = centroid_x * voxel_scale;
+	float y = centroid_y * voxel_scale;
+	float z = centroid_z * voxel_scale;
+
 	// z direction front
-	o_bbox[0] = Imath::V3f(x + width, y + width, z + width);
-	o_bbox[1] = Imath::V3f(x - width, y + width, z + width);
-	o_bbox[2] = Imath::V3f(x - width, y - width, z + width);
-	o_bbox[3] = Imath::V3f(x + width, y - width, z + width);
+	o_bbox[0] = Imath::V3f(offset_x + x + half_width, offset_y + y + half_width, offset_z + z + half_width);
+	o_bbox[1] = Imath::V3f(offset_x + x - half_width, offset_y + y + half_width, offset_z + z + half_width);
+	o_bbox[2] = Imath::V3f(offset_x + x - half_width, offset_y + y - half_width, offset_z + z + half_width);
+	o_bbox[3] = Imath::V3f(offset_x + x + half_width, offset_y + y - half_width, offset_z + z + half_width);
 
 	// z direction back
-	o_bbox[4] = Imath::V3f(x + width, y + width, z - width);
-	o_bbox[5] = Imath::V3f(x - width, y + width, z - width);
-	o_bbox[6] = Imath::V3f(x - width, y - width, z - width);
-	o_bbox[7] = Imath::V3f(x + width, y - width, z - width);
+	o_bbox[4] = Imath::V3f(offset_x + x + half_width, offset_y + y + half_width, offset_z + z - half_width);
+	o_bbox[5] = Imath::V3f(offset_x + x - half_width, offset_y + y + half_width, offset_z + z - half_width);
+	o_bbox[6] = Imath::V3f(offset_x + x - half_width, offset_y + y - half_width, offset_z + z - half_width);
+	o_bbox[7] = Imath::V3f(offset_x + x + half_width, offset_y + y - half_width, offset_z + z - half_width);
 }
 
 void process_VoxelComponentType(const Bifrost::API::Component& component)
 {
 	std::cout << "process_VoxelComponentType() START" << std::endl;
 	Bifrost::API::Layout layout = component.layout();
+	float voxel_scale = layout.voxelScale();
+	std::cout << boost::format("process_VoxelComponentType() voxel_scale %1%") % voxel_scale << std::endl;
 	size_t max_depth = layout.maxDepth();
 	std::cout << boost::format("process_VoxelComponentType() max_depth %1%") % max_depth << std::endl;
 	Bifrost::API::RefArray channel_array = component.channels();
 	size_t num_channels = channel_array.count();
 	std::cout << boost::format("process_VoxelComponentType() number of channels %1%") % num_channels << std::endl;
 	size_t channel_index = 0;
+	Bifrost::API::TileDimInfo tile_dim_info = layout.tileDimInfo(max_depth);
+	const float tile_width = tile_dim_info.tileWidth;
+	// std::cout << boost::format("process_VoxelComponentType() tile_dim_info.tileWidth %1%") % tile_dim_info.tileWidth << std::endl;
+	// std::cout << boost::format("process_VoxelComponentType() tile_dim_info.tileSize %1%") % tile_dim_info.tileSize << std::endl;
+
 	// for (size_t channel_index = 0; channel_index < num_channels; ++channel_index)
 	{
 		const Bifrost::API::Channel current_channel = channel_array[channel_index];
 		Bifrost::API::TileIterator tIter = layout.tileIterator(max_depth, max_depth, Bifrost::API::TraversalMode::DepthFirst);
 		int tile_index = 0;
-		const float voxel_width = 0.5f;
 		while (tIter)
 		{
 			// std::string i_obj_filename = "voxel_tiles.%04d.obj";
@@ -95,7 +111,7 @@ void process_VoxelComponentType(const Bifrost::API::Component& component)
 
 			Imath::V3f box[8];
 			std::string obj_string;
-			Centroid2Box(info.i, info.j, info.k, voxel_width, box);
+			Centroid2Box(info.i, info.j, info.k, tile_width, voxel_scale, box);
 			Box2WavefrontString(box, obj_string);
 			wavefront_file << obj_string.c_str();
 
